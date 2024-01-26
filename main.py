@@ -3,6 +3,7 @@ import asyncio
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
 from core.settings import settings
+from core.handlers import courier
 
 
 async def start():
@@ -12,6 +13,7 @@ async def start():
     dp = Dispatcher()
 
 
+    dp.include_routers(courier.router)
 
     try:
         await dp.start_polling(bot)
