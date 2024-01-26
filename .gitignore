@@ -1,0 +1,5 @@
+/venv/
+requirements.txt
+test.py
+config
+core/base.db
