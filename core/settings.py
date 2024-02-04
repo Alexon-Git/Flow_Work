@@ -1,8 +1,15 @@
 # pip install environs
-import gspread
+# import gspread
+import os
 from environs import Env
 from dataclasses import dataclass
-from google.oauth2 import service_account
+
+import gspread
+from google.oauth2.service_account import Credentials
+
+# Путь от корня системы до папки core например:
+# D:\Programing\Flow_Work\core
+home = os.path.dirname(__file__)
 
 @dataclass
 class Bots:
@@ -27,11 +34,7 @@ def get_settings(path: str):
 
 settings = get_settings('config')
 
-# scope = ['https://www.googleapis.com/auth/spreadsheets']
-# credentials = service_account.Credentials.from_service_account_file('core/cred.json')
-# client = gspread.authorize(credentials.with_scopes(scope))
-# sheet = client.open_by_url('https://docs.google.com/spreadsheets/d/16XBlws6qIfZ7q9yPhqocrywvwZn4XBqYwrRoJLzJp2k/edit#gid=558743972')
-# worksheet = sheet.get_worksheet(0)
-# worksheet_user = sheet.worksheet('UserBot')
-# worksheet_stocks = sheet.get_worksheet(2)
-
+scope = ['https://www.googleapis.com/auth/spreadsheets']
+credentials = Credentials.from_service_account_file(f'{home}/cred.json')
+client = gspread.authorize(credentials.with_scopes(scope))
+sheet = client.open_by_url('https://docs.google.com/spreadsheets/d/1ZdLjtdhlsD3B1wVDQFRfTo3NpvqGyudoitUJLcBuSNo/edit#gid=0')

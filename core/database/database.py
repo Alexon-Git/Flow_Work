@@ -7,8 +7,6 @@ from asyncpg.exceptions import *
 user = "postgres"
 password = "12345"
 
-name_table = ["main_info", "acquanted", "partner", "project"]
-
 
 async def connect() -> asyncpg.Connection:
     return await asyncpg.connect(host="localhost",
@@ -36,7 +34,7 @@ async def set_courier(data: dict):
     try:
         query = ('INSERT INTO public.courier (username, user_id, status_payment, date_payment_expiration,'
                  'date_registration, fio, phone, email, city,notification_one,notification_zero) '
-                 'VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,$10,$11)')
+                 'VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)')
         await conn.execute(query,
                            data["username"], data["user_id"], data["status_payment"],
                            data["date_payment_expiration"], data["date_registration"], data["fio"],
@@ -76,12 +74,14 @@ async def set_request(user_id, data: dict):
         await conn.close()
     return
 
+
 # #######################_CHANGE_DATA_################################################################ #
 async def payment_courier(user_id: int,date:str) -> dict:
     conn = await connect()
-    query = 'UPDATE public.courier SET status_payment = true,notification_one = false,notification_zero = false date_payment_expiration = $1 WHERE public.courier.user_id = $2'
+    query = ('UPDATE public.courier SET status_payment = true,notification_one = false,notification_zero = false,'
+             ' date_payment_expiration = $1 WHERE public.courier.user_id = $2')
     try:
-        await conn.execute(query, date,user_id)
+        await conn.execute(query, date, user_id)
     finally:
         await conn.close()
     return
@@ -178,6 +178,36 @@ async def get_notification_zero(date:str) -> dict:
     finally:
         await conn.close()
     return rows
+
+
+async def get_id_courier() -> list[int]:
+    conn = await connect()
+    query = 'SELECT user_id FROM public.courier'
+    try:
+        rows = await conn.fetch(query)
+    finally:
+        await conn.close()
+    return [i["user_id"] for i in rows]
+
+
+async def get_id_customer() -> list[int]:
+    conn = await connect()
+    query = 'SELECT user_id FROM public.customer'
+    try:
+        rows = await conn.fetch(query)
+    finally:
+        await conn.close()
+    return [i["user_id"] for i in rows]
+
+
+async def get_id_all_user() -> list[int]:
+    conn = await connect()
+    query = 'SELECT user_id FROM public.users'
+    try:
+        rows = await conn.fetch(query)
+    finally:
+        await conn.close()
+    return [i["user_id"] for i in rows]
 
 # #######################_CHECK_DATA_################################################################ #
 async def check_courier(user_id: int) -> bool:
