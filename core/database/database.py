@@ -7,6 +7,8 @@ from asyncpg.exceptions import *
 user = "postgres"
 password = "12345"
 
+name_table = ["main_info", "acquanted", "partner", "project"]
+
 
 async def connect() -> asyncpg.Connection:
     return await asyncpg.connect(host="localhost",
@@ -34,7 +36,7 @@ async def set_courier(data: dict):
     try:
         query = ('INSERT INTO public.courier (username, user_id, status_payment, date_payment_expiration,'
                  'date_registration, fio, phone, email, city,notification_one,notification_zero) '
-                 'VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)')
+                 'VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,$10,$11)')
         await conn.execute(query,
                            data["username"], data["user_id"], data["status_payment"],
                            data["date_payment_expiration"], data["date_registration"], data["fio"],
@@ -59,29 +61,27 @@ async def set_customer(data: dict):
     return
 
 
-async def set_request(user_id, data: dict):
+async def set_request(data: dict):
     """Добавляет новый заказ"""
     conn = await connect()
     try:
-        query = ('INSERT INTO public.courier (username_customer, user_id_customer, '
-                 'date_registration, status_work, adress_a, adress_b, code) '
-                 'VALUES ($1, $2, $3, $4, $5, $6, $7)')
-        await conn.execute(query, user_id,
+        query = ('INSERT INTO public.request (username_customer, user_id_customer, '
+                 'date_registration, status_work, adress_a, adress_b, code,price,store_name,message_id,chat_id) '
+                 'VALUES ($1, $2, $3, $4, $5, $6, $7,$8,$9,$10,$11)')
+        await conn.execute(query,
                            data["username_customer"], data["user_id_customer"],
                            data["date_registration"], data["status_work"],
-                           data["adress_a"], data["adress_b"], data["code"])
+                           data["adress_a"], data["adress_b"], data["code"],data["price"],data["store_name"],data["message_id"],data["chat_id"])
     finally:
         await conn.close()
     return
 
-
 # #######################_CHANGE_DATA_################################################################ #
 async def payment_courier(user_id: int,date:str) -> dict:
     conn = await connect()
-    query = ('UPDATE public.courier SET status_payment = true,notification_one = false,notification_zero = false,'
-             ' date_payment_expiration = $1 WHERE public.courier.user_id = $2')
+    query = 'UPDATE public.courier SET status_payment = true,notification_one = false,notification_zero = false date_payment_expiration = $1 WHERE public.courier.user_id = $2'
     try:
-        await conn.execute(query, date, user_id)
+        await conn.execute(query, date,user_id)
     finally:
         await conn.close()
     return
@@ -97,13 +97,20 @@ async def change_notification_one(user_id: int,mode:bool) -> dict:
 
 async def change_notification_zero(user_id: int,mode:bool) -> dict:
     conn = await connect()
-    query = 'UPDATE public.courier SET notification_zero = $1 WHERE public.courier.user_id = $2'
+    query = 'UPDATE public.courier SET notification_zero = $1 AND status_payment = false WHERE public.courier.user_id = $2'
     try:
         await conn.execute(query,mode,user_id)
     finally:
         await conn.close()
     return
-
+async def change_status_work(id:int,status:str):
+    conn = await connect()
+    query = 'UPDATE public.request SET status_work = $1 WHERE public.request.id = $2'
+    try:
+        await conn.execute(query,status,id)
+    finally:
+        await conn.close()
+    return
 # #######################_GET_DATA_################################################################ #
 async def get_courier(user_id: int) -> dict:
     conn = await connect()
@@ -143,11 +150,11 @@ async def get_customer(user_id: int) -> dict:
     return result
 
 
-async def get_request(user_id: int) -> dict:
+async def get_request(id: int) -> dict:
     conn = await connect()
-    query = 'SELECT * FROM public.request WHERE public.request.user_id = $1'
+    query = 'SELECT * FROM public.request WHERE public.request.id = $1'
     try:
-        rows = await conn.fetch(query, user_id)
+        rows = await conn.fetch(query, id)
     finally:
         await conn.close()
     try:
@@ -156,7 +163,44 @@ async def get_request(user_id: int) -> dict:
                   "status_work": rows[0]["status_work"],
                   "adress_a": rows[0]["adress_a"],
                   "adress_b": rows[0]["adress_b"],
-                  "code": rows[0]["code"]}
+                  "code": rows[0]["code"],"price":rows[0]["price"],
+                  "store_name":rows[0]["store_name"],"message_id":rows[0]["message_id"],
+                  "chat_id":rows[0]["chat_id"]}
+    except IndexError:
+        return {}
+    return result
+
+async def get_customer_sent_request(user_id: int) -> dict:
+    conn = await connect()
+    query = 'SELECT * FROM public.request WHERE public.request.user_id_customer = $1'
+    try:
+        rows = await conn.fetch(query, user_id)
+    finally:
+        await conn.close()
+    try:
+        result = []
+        for row in rows:
+            result.append({"id":row["id"],"user_id_customer": row["user_id_customer"], "username_customer": row["username_customer"],
+                    "date_registration": row["date_registration"],
+                    "status_work": row["status_work"],
+                    "adress_a": row["adress_a"],
+                    "adress_b": row["adress_b"],
+                    "code": row["code"],"price":row["price"],
+                    "store_name":row["store_name"],"message_id":row["message_id"],
+                    "chat_id":row["chat_id"]})
+    except IndexError:
+        return {}
+    return result
+
+async def get_request_id(message_id:int) -> dict:
+    conn = await connect()
+    query = 'SELECT id FROM public.request WHERE public.request.message_id = $1'
+    try:
+        rows = await conn.fetch(query, message_id)
+    finally:
+        await conn.close()
+    try:
+        result = rows[0]["id"]
     except IndexError:
         return {}
     return result
@@ -178,36 +222,6 @@ async def get_notification_zero(date:str) -> dict:
     finally:
         await conn.close()
     return rows
-
-
-async def get_id_courier() -> list[int]:
-    conn = await connect()
-    query = 'SELECT user_id FROM public.courier'
-    try:
-        rows = await conn.fetch(query)
-    finally:
-        await conn.close()
-    return [i["user_id"] for i in rows]
-
-
-async def get_id_customer() -> list[int]:
-    conn = await connect()
-    query = 'SELECT user_id FROM public.customer'
-    try:
-        rows = await conn.fetch(query)
-    finally:
-        await conn.close()
-    return [i["user_id"] for i in rows]
-
-
-async def get_id_all_user() -> list[int]:
-    conn = await connect()
-    query = 'SELECT user_id FROM public.users'
-    try:
-        rows = await conn.fetch(query)
-    finally:
-        await conn.close()
-    return [i["user_id"] for i in rows]
 
 # #######################_CHECK_DATA_################################################################ #
 async def check_courier(user_id: int) -> bool:
