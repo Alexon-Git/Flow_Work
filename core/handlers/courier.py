@@ -7,20 +7,23 @@ from aiogram.fsm.state import StatesGroup, State
 from core.keyboards.inline import *
 from core.keyboards.reply import *
 from core.filters.Filters import *
+from core.settings import worksheet_city
 import asyncio
 import datetime
+import math
 from datetime import date
 import database
 
 router = Router()
-group_id = -1002057238567
+global city_info
+city_info = []
 
 class CourierState(StatesGroup):
     fio = State()
     email = State()
     city = State()
     phone = State()
-
+    n = ()
 
 
 #===================================Меню Курьера===================================
@@ -28,9 +31,13 @@ class CourierState(StatesGroup):
 async def courier_callback(callback: types.CallbackQuery,bot:Bot):
     if await database.check_courier(user_id = callback.from_user.id):
         expire_date = datetime.datetime.now() + datetime.timedelta(days=1)
-        link = await bot.create_chat_invite_link(chat_id=group_id, expire_date= int( expire_date.timestamp()),member_limit= 1)
-        builder = create_courier_buttons(True,link.invite_link) 
         courier = await database.get_courier(callback.from_user.id)
+        for i in city_info:
+            if i["Город"]==courier["city"]:
+                chat_id = i["chat id"]
+        link = await bot.create_chat_invite_link(chat_id=chat_id, expire_date= int( expire_date.timestamp()),member_limit= 1)
+        builder = create_courier_buttons(True,link.invite_link) 
+        
         days = datetime.datetime.strptime(courier["date_payment_expiration"], "%Y-%m-%d").date() - date.today()
         message = f"Меню для курьеров.\nУ вас осталось {days.days}д. оплаченной подписки."
     else:
@@ -99,9 +106,18 @@ async def fio_incorrectly(message: Message):
 @router.message(CourierState.email,EmailFilter())
 async def courier_email(message: Message,state: FSMContext):
     await state.update_data(email = message.text)
-    await message.answer("Введите ваш город")
     await state.set_state(CourierState.city)
-    
+    cities = []
+    for i in city_info:
+        if i["Город"]!="":
+            cities.append(i["Город"])
+        else:
+            break
+    await state.update_data(city = cities)
+    await state.update_data(n = 1)
+    builder = await create_choose_city_buttons(state)
+    await message.answer("Выберите город в котором вы будете доставлять заказы. Если вашего города нет, то выбирайте ближайший.",reply_markup = builder.as_markup())    
+
 @router.message(CourierState.email)
 async def email_incorrectly(message: Message):
     await message.answer(
@@ -109,14 +125,51 @@ async def email_incorrectly(message: Message):
     )
     
     
-    
+#===================================Колбек кнопок городов===================================
+@router.callback_query(F.data.startswith("city_"),CourierState.city)
+async def customer_button_callback(callback: types.CallbackQuery,state: FSMContext,bot: Bot):
+    action = callback.data.split("_")[1]
+    if action == "next":
+        data = await state.get_data()
+        n = data["n"]
+        city = data['city']
+        if n+1>math.ceil(len(city)/6):
+            await callback.answer("Это конец списка")
+            return
+        else:
+            n+=1
+        await state.update_data(n = n)
+        builder = await create_choose_city_buttons(state)
+        await callback.message.edit_reply_markup(reply_markup=builder.as_markup())
+    elif action == "back":
+        data = await state.get_data()
+        n = data["n"]
+        city = data['city']
+        if n-1<1:
+            await callback.answer("Это начало списка")
+            return
+        else:
+            n-=1
+        await state.update_data(n = n)
+        builder = await create_choose_city_buttons(state)
+        await callback.message.edit_reply_markup(reply_markup=builder.as_markup())
+    elif action == "break":
+        await state.clear()
+        await callback.message.delete()
+        await callback.answer()
+    else:
+        await state.update_data(city = int(action))
+        await state.set_state(CourierState.phone)
+        builder = create_contact_button()
+        await callback.message.answer("Отправьте ваш номер телефона",reply_markup=builder.as_markup(resize_keyboard=True))
+        await callback.answer()
 #===================================Город===================================
-@router.message(CourierState.city)
-async def courier_city(message: Message,state: FSMContext):
-    await state.update_data(city = message.text)
-    await state.set_state(CourierState.phone)
-    builder = create_contact_button()
-    await message.answer("Отправьте ваш номер телефона",reply_markup=builder.as_markup(resize_keyboard=True))
+# @router.message(CourierState.city)
+# async def courier_city(message: Message,state: FSMContext):
+#     await state.update_data(city = message.text)
+#     await state.set_state(CourierState.phone)
+#     builder = create_contact_button()
+#     await message.answer("Отправьте ваш номер телефона",reply_markup=builder.as_markup(resize_keyboard=True))
     
 
 
@@ -127,7 +180,9 @@ async def courier_contact(message:Message,state: FSMContext,bot:Bot):
     data = await state.get_data()
     await state.clear()
     expire_date = datetime.datetime.now() + datetime.timedelta(days=1)
-    link = await bot.create_chat_invite_link(chat_id=group_id, expire_date= int( expire_date.timestamp()),member_limit= 1)
+    chat_id = city_info[data["city"]]["chat id"]
+    print(chat_id)
+    link = await bot.create_chat_invite_link(chat_id=chat_id, expire_date= int( expire_date.timestamp()),member_limit= 1)
     await message.answer(f"Регистрация успешно завершена. Вы получили 14д пробного использования.\nСсылка на вступление в группу города: {link.invite_link}",reply_markup=ReplyKeyboardRemove())
     new_courier =  {
         "username" : message.from_user.first_name,
@@ -136,7 +191,7 @@ async def courier_contact(message:Message,state: FSMContext,bot:Bot):
         "date_payment_expiration":str(date.today()+datetime.timedelta(days=14)),
         "date_registration":str(date.today()),
         "fio":data["fio"],
-        "city":data["city"],
+        "city":city_info[data["city"]]["Город"],
         "phone":data["phone"],
         "email":data["email"],
         "notification_one":False,
@@ -147,6 +202,8 @@ async def courier_contact(message:Message,state: FSMContext,bot:Bot):
     
 #===================================Цикл уведомлений===================================
 async def check_date(bot: Bot):
+    global city_info
+    city_info = worksheet_city.get_all_records()
     users = await database.get_notification_one(str(date.today()+datetime.timedelta(days=1)))
     for user in users:
         try:
@@ -158,11 +215,10 @@ async def check_date(bot: Bot):
     users = await database.get_notification_zero(str(date.today()))
     for user in users:
         try:
-            print(await bot.get_chat(chat_id=user["user_id"]))
             await bot.send_message(chat_id=user["user_id"],text="У вас закончилась подписка курьера.")
         except TelegramBadRequest:
             pass
         finally:
             await database.change_notification_zero(user["user_id"],True)
-    await asyncio.sleep(5)
+    await asyncio.sleep(21600)
     await check_date(bot)
