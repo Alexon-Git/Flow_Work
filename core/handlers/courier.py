@@ -1,22 +1,24 @@
-from aiogram import Router, types,F,Bot
-from aiogram.exceptions import TelegramBadRequest
-from aiogram.filters import Command,CommandStart, BaseFilter
-from aiogram.types import Message, LabeledPrice,ReplyKeyboardRemove
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State
-from core.keyboards.inline import *
-from core.keyboards.reply import *
-from core.filters.Filters import *
-from core.settings import worksheet_city
+import math
 import asyncio
 import datetime
-import math
 from datetime import date
-import database
+
+from aiogram import Router, types, F, Bot
+from aiogram.fsm.state import StatesGroup, State
+from aiogram.exceptions import TelegramBadRequest
+from aiogram.types import LabeledPrice, ReplyKeyboardRemove
+
+from core.keyboards.reply import *
+from core.filters.Filters import *
+from core.database import database
+from core.keyboards.inline import *
+from core.settings import worksheet_city
+from core.message.text import get_amount
 
 router = Router()
 global city_info
 city_info = []
+
 
 class CourierState(StatesGroup):
     fio = State()
@@ -66,7 +68,7 @@ async def courier_button_callback(callback: types.CallbackQuery,state: FSMContex
         currency="rub",
         prices=[LabeledPrice(
             label = "Оплата подписки",
-            amount = "30000",
+            amount=get_amount(),
             )],
         provider_data=None,
         is_flexible=False,
@@ -74,7 +76,7 @@ async def courier_button_callback(callback: types.CallbackQuery,state: FSMContex
         )
         await callback.answer()
     elif action == "back":
-        builder = create_start_buttons()
+        builder = await create_start_buttons(callback.from_user.id)
         await callback.message.edit_text("Приветственное сообщение", reply_markup=builder.as_markup())
 @router.pre_checkout_query()
 async def pre_checkout_query_handler(pre_checkout_query: types.PreCheckoutQuery,bot:Bot):
@@ -84,7 +86,7 @@ async def pre_checkout_query_handler(pre_checkout_query: types.PreCheckoutQuery,
 async def successful_payment(message:Message):
     courier = await database.get_courier(message.from_user.id)
     date = datetime.datetime.strptime(courier["date_payment_expiration"], "%Y-%m-%d").date() + datetime.timedelta(days=30)
-    await database.payment_courier(message.from_user.id,str(date))
+    await database.payment_courier(message.from_user.id, str(date))
     await message.answer("Вы успешно оплатили подписку на месяц")
 
 #===================================ФИО===================================
@@ -204,14 +206,14 @@ async def courier_contact(message:Message,state: FSMContext,bot:Bot):
 async def check_date(bot: Bot):
     global city_info
     city_info = worksheet_city.get_all_records()
-    users = await database.get_notification_one(str(date.today()+datetime.timedelta(days=1)))
+    users = await database.get_notification_one(str(date.today() + datetime.timedelta(days=1)))
     for user in users:
         try:
             await bot.send_message(chat_id=user["user_id"],text="Через 1д. у вас закончится подписка курьера.")
         except TelegramBadRequest:
             pass
         finally:
-            await database.change_notification_one(user["user_id"],True)
+            await database.change_notification_one(user["user_id"], True)
     users = await database.get_notification_zero(str(date.today()))
     for user in users:
         try:
@@ -219,6 +221,6 @@ async def check_date(bot: Bot):
         except TelegramBadRequest:
             pass
         finally:
-            await database.change_notification_zero(user["user_id"],True)
+            await database.change_notification_zero(user["user_id"], True)
     await asyncio.sleep(21600)
     await check_date(bot)

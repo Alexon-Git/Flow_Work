@@ -4,15 +4,15 @@ from typing import Union
 import asyncpg
 from asyncpg.exceptions import *
 
-user = "postgres"
-password = "12345"
+from core.settings import settings
 
-name_table = ["main_info", "acquanted", "partner", "project"]
+user = "test"
+password = "testim"
 
 
 async def connect() -> asyncpg.Connection:
     return await asyncpg.connect(host="localhost",
-                                 port="5433",
+                                 port="5432",
                                  user=user,
                                  password=password,
                                  database="order_aggregator")
@@ -36,7 +36,7 @@ async def set_courier(data: dict):
     try:
         query = ('INSERT INTO public.courier (username, user_id, status_payment, date_payment_expiration,'
                  'date_registration, fio, phone, email, city,notification_one,notification_zero) '
-                 'VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,$10,$11)')
+                 'VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)')
         await conn.execute(query,
                            data["username"], data["user_id"], data["status_payment"],
                            data["date_payment_expiration"], data["date_registration"], data["fio"],
@@ -76,15 +76,17 @@ async def set_request(data: dict):
         await conn.close()
     return
 
+
 # #######################_CHANGE_DATA_################################################################ #
 async def payment_courier(user_id: int,date:str) -> dict:
     conn = await connect()
-    query = 'UPDATE public.courier SET status_payment = true,notification_one = false,notification_zero = false date_payment_expiration = $1 WHERE public.courier.user_id = $2'
+    query = 'UPDATE public.courier SET status_payment = true,notification_one = false,notification_zero = false, date_payment_expiration = $1 WHERE public.courier.user_id = $2'
     try:
         await conn.execute(query, date,user_id)
     finally:
         await conn.close()
     return
+
 
 async def change_notification_one(user_id: int,mode:bool) -> dict:
     conn = await connect()
@@ -103,6 +105,8 @@ async def change_notification_zero(user_id: int,mode:bool) -> dict:
     finally:
         await conn.close()
     return
+
+
 async def change_status_work(id:int,status:str):
     conn = await connect()
     query = 'UPDATE public.request SET status_work = $1 WHERE public.request.id = $2'
@@ -111,8 +115,23 @@ async def change_status_work(id:int,status:str):
     finally:
         await conn.close()
     return
+
+
 # #######################_GET_DATA_################################################################ #
 async def get_courier(user_id: int) -> dict:
+    conn = await connect()
+    query = 'SELECT * FROM public.courier WHERE public.courier.user_id = $1'
+    try:
+        rows = await conn.fetch(query, user_id)
+    finally:
+        await conn.close()
+    try:
+        return rows[0]
+    except IndexError:
+        return {}
+
+
+async def get_user(user_id: int) -> dict:
     conn = await connect()
     query = 'SELECT * FROM public.courier WHERE public.courier.user_id = $1'
     try:
@@ -170,6 +189,7 @@ async def get_request(id: int) -> dict:
         return {}
     return result
 
+
 async def get_customer_sent_request(user_id: int) -> dict:
     conn = await connect()
     query = 'SELECT * FROM public.request WHERE public.request.user_id_customer = $1'
@@ -192,7 +212,8 @@ async def get_customer_sent_request(user_id: int) -> dict:
         return {}
     return result
 
-async def get_request_id(message_id:int) -> dict:
+
+async def get_request_id(message_id:int) -> int:
     conn = await connect()
     query = 'SELECT id FROM public.request WHERE public.request.message_id = $1'
     try:
@@ -202,7 +223,7 @@ async def get_request_id(message_id:int) -> dict:
     try:
         result = rows[0]["id"]
     except IndexError:
-        return {}
+        return 0
     return result
 
 async def get_notification_one(date:str) -> dict:
@@ -222,6 +243,57 @@ async def get_notification_zero(date:str) -> dict:
     finally:
         await conn.close()
     return rows
+
+
+async def get_all_courier() -> list[asyncpg.Record]:
+    conn = await connect()
+    query = 'SELECT * FROM public.courier'
+    try:
+        rows = await conn.fetch(query)
+    finally:
+        await conn.close()
+    return rows
+
+
+async def get_all_customer() -> list[asyncpg.Record]:
+    conn = await connect()
+    query = 'SELECT * FROM public.customer'
+    try:
+        rows = await conn.fetch(query)
+    finally:
+        await conn.close()
+    return rows
+
+
+async def get_id_courier() -> list[int]:
+    conn = await connect()
+    query = 'SELECT user_id FROM public.courier'
+    try:
+        rows = await conn.fetch(query)
+    finally:
+        await conn.close()
+    return [i["user_id"] for i in rows]
+
+
+async def get_id_customer() -> list[int]:
+    conn = await connect()
+    query = 'SELECT user_id FROM public.customer'
+    try:
+        rows = await conn.fetch(query)
+    finally:
+        await conn.close()
+    return [i["user_id"] for i in rows]
+
+
+async def get_id_all_user() -> list[int]:
+    conn = await connect()
+    query = 'SELECT user_id FROM public.users'
+    try:
+        rows = await conn.fetch(query)
+    finally:
+        await conn.close()
+    return [i["user_id"] for i in rows]
+
 
 # #######################_CHECK_DATA_################################################################ #
 async def check_courier(user_id: int) -> bool:
@@ -288,10 +360,95 @@ async def check_date(date_today:str) -> bool:
         await conn.close()
     return result
 
+
+# ####################################################################################################
+async def save_new_admin(user_id: int):
+    conn = await connect()
+    query = 'UPDATE public.users SET admin = true WHERE public.users.user_id = $1'
+    try:
+        await conn.execute(query, user_id)
+    finally:
+        await conn.close()
+    return
+
+
+async def get_id_admin() -> list[int]:
+    conn = await connect()
+    query = 'SELECT user_id FROM public.users WHERE public.users.admin = true'
+    try:
+        rows = await conn.fetch(query)
+    finally:
+        await conn.close()
+    admins = [i["user_id"] for i in rows]
+    admins.append(settings.bots.admin_id)
+    return admins
+
+
+async def get_data_admin() -> list[asyncpg.Record]:
+    conn = await connect()
+    query = 'SELECT * FROM public.users WHERE public.users.admin = true'
+    try:
+        rows = await conn.fetch(query)
+    finally:
+        await conn.close()
+    return rows
+
+
+async def deleted_admin(user_id: int):
+    conn = await connect()
+    query = 'UPDATE public.users SET admin = false WHERE public.users.user_id = $1'
+    try:
+        await conn.execute(query, user_id)
+    finally:
+        await conn.close()
+    return
+
+
+async def deleted_customer(user_id: int):
+    conn = await connect()
+    query = 'DELETE FROM public.customer WHERE public.customer.user_id = $1'
+    try:
+        await conn.execute(query, user_id)
+    finally:
+        await conn.close()
+    return
+
+
+async def deleted_courier(user_id: int):
+    conn = await connect()
+    query = 'DELETE FROM public.courier WHERE public.courier.user_id = $1'
+    try:
+        await conn.execute(query, user_id)
+    finally:
+        await conn.close()
+    return
+
+
+async def update_courier(data: dict):
+    conn = await connect()
+    query = ('UPDATE public.courier SET fio=$1, phone=$2, email=$3, city=$4 '
+             'WHERE public.courier.user_id=$5')
+    try:
+        await conn.execute(query, data["fio"], data["phone"], data["email"], data["city"], data["user_id"])
+    finally:
+        await conn.close()
+    return
+
+
+async def update_customer(data: dict):
+    conn = await connect()
+    query = ('UPDATE public.courier SET fio=$1, phone=$2, email=$3, city=$4, organization=$5 '
+             'WHERE public.courier.user_id=$6')
+    try:
+        await conn.execute(query, data["fio"], data["phone"], data["email"], data["city"], data["organization"], data["user_id"])
+    finally:
+        await conn.close()
+    return
+
+
 #   ПРоверка наличия айди в БД
 async def main():
-    root = await get_courier(123560344)
-    print(root)
+    root = await deleted_courier(14111)
     return
 
 

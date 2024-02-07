@@ -3,3 +3,7 @@ test.py
 config
 core/base.db
 .idea
+core/administrate/code.txt
+core/logging
+core/message/amount.txt
+core/message/start_mess.txt

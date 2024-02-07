@@ -8,8 +8,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.filters.state import State, StatesGroup
 
 import core.keyboards.inline as kbi
-from core.google_doc.googleSheets import get_id_admin
-from core.database.database import get_id_courier, get_id_all_user, get_id_customer
+from core.database.database import get_id_courier, get_id_all_user, get_id_customer, get_id_admin
 
 subrouter = Router()
 subrouter.message.filter(F.from_user.id.in_(get_id_admin()))

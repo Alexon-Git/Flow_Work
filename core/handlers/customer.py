@@ -1,23 +1,24 @@
-from aiogram import Router, types,F,Bot
-from aiogram.exceptions import TelegramBadRequest
-from aiogram.filters import Command,CommandStart, BaseFilter
-from aiogram.types import Message, ReplyKeyboardRemove
 import math
 import random
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State
-from core.keyboards.inline import *
-from core.keyboards.reply import *
-from core.filters.Filters import *
-from core.settings import worksheet_city
-from core.handlers.courier import city_info
 import datetime
 from datetime import date
-import database
+
+from aiogram import Router, types,F,Bot
+from aiogram.filters import Command
+from aiogram.types import ReplyKeyboardRemove
+from aiogram.fsm.state import StatesGroup, State
+
+from core.keyboards.reply import *
+from core.filters.Filters import *
+from core.database import database
+from core.keyboards.inline import *
+from core.settings import worksheet_city
+from core.handlers.courier import city_info
 
 router = Router()
 #group_id = -1002057238567
 group_id = -4168135619
+
 
 class CustomerRegistration(StatesGroup):
     fio = State()
@@ -60,7 +61,7 @@ async def testmenu(message:Message):
 async def customer_callback(callback: types.CallbackQuery,bot:Bot):
     if await database.check_customer(user_id = callback.from_user.id):
         expire_date = datetime.datetime.now() + datetime.timedelta(days=1)
-        builder = create_customer_buttons(True) 
+        builder = create_customer_buttons(True)
         message = f"Меню заказчиков.\nЗдесь вы можете просмотреть свои заявки или создать новую."
     else:
         message = "Меню заказчиков.\nПройдите регистрацию для получения доступа к созданию заявок"
@@ -71,7 +72,7 @@ async def customer_callback(callback: types.CallbackQuery,bot:Bot):
     
 #===================================Колбек Меню Заказчика===================================
 @router.callback_query(F.data.startswith("customer_"))
-async def customer_button_callback(callback: types.CallbackQuery,state: FSMContext,bot: Bot):
+async def customer_button_callback(callback: types.CallbackQuery,state: FSMContext):
     action = callback.data.split("_")[1]
     if action == "registration":
         await state.set_state(CustomerRegistration.fio)
@@ -83,35 +84,35 @@ async def customer_button_callback(callback: types.CallbackQuery,state: FSMConte
         await state.update_data(city = cities)
         await state.update_data(n = 1)
         builder = await create_choose_city_buttons(state)
-        await callback.message.answer("Выберите город из которого бутет произведена доставка. Если вашего города нет, то выбирайте ближайший.",reply_markup = builder.as_markup())    
+        await callback.message.answer("Выберите город из которого бутет произведена доставка. Если вашего города нет, то выбирайте ближайший.",reply_markup = builder.as_markup())
         await callback.answer()
     elif action == "back":
-        builder = create_start_buttons()
+        builder = await create_start_buttons(callback.from_user.id)
         await callback.message.edit_text("Приветственное сообщение", reply_markup=builder.as_markup())
     elif action=="forms":
         forms = await database.get_customer_sent_request(callback.from_user.id)
         for form in forms:
             if form["status_work"]=="work":
                 msg = "<b>Заявка в работе</b>\n"+"-"*30+"\n"
-                msg+=f"Магазин: {form["store_name"]}\n"
-                msg+=f"Адрес А: {form["adress_a"]}\n"
-                msg+=f"Адрес Б: {form["adress_b"]}\n"
-                msg+=f"Стоимость: {form["price"]}\n"
-                msg+=f"Код: {form["code"]}\n"
+                msg+=f"Магазин: {form['store_name']}\n"
+                msg+=f"Адрес А: {form['adress_a']}\n"
+                msg+=f"Адрес Б: {form['adress_b']}\n"
+                msg+=f"Стоимость: {form['price']}\n"
+                msg+=f"Код: {form['code']}\n"
                 builder = customer_finish(form["id"])
                 await callback.message.answer(text = msg,reply_markup=builder.as_markup())
             elif form["status_work"]=="sent":
                 msg = "<b>Заявка отправлена</b>\n"+"-"*30+"\n"
-                msg+=f"Магазин: {form["store_name"]}\n"
-                msg+=f"Адрес А: {form["adress_a"]}\n"
-                msg+=f"Адрес Б: {form["adress_b"]}\n"
-                msg+=f"Стоимость: {form["price"]}\n"
-                msg+=f"Код: {form["code"]}\n"
+                msg+=f"Магазин: {form['store_name']}\n"
+                msg+=f"Адрес А: {form['adress_a']}\n"
+                msg+=f"Адрес Б: {form['adress_b']}\n"
+                msg+=f"Стоимость: {form['price']}\n"
+                msg+=f"Код: {form['code']}\n"
                 builder = form_cancel(form["id"])
                 await callback.message.answer(text = msg,reply_markup=builder.as_markup())
         await callback.answer()
-                
-        
+
+
         
         
 #===================================ФИО===================================
@@ -153,7 +154,7 @@ async def customer_email(message: Message,state: FSMContext):
     await state.update_data(n = 1)
     builder = await create_choose_city_buttons(state)
     await message.answer("Выберите ваш город. Если вашего города нет, то выбирайте ближайший.",reply_markup = builder.as_markup())
-    
+
 @router.message(CustomerRegistration.email)
 async def email_incorrectly(message: Message):
     await message.answer(
@@ -308,10 +309,10 @@ async def form_store(message: Message,state: FSMContext):
     data = await state.get_data()
     city = worksheet_city.col_values(1)[1:][data["city"]]
     msg+=f"Город: {city}\n"
-    msg+=f"Магазин: {data["store_name"]}\n"
-    msg+=f"Адрес А: {data["adress_a"]}\n"
-    msg+=f"Адрес Б: {data["adress_b"]}\n"
-    msg+=f"Стоимость доставки: {data["cash"]}\n"
+    msg+=f"Магазин: {data['store_name']}\n"
+    msg+=f"Адрес А: {data['adress_a']}\n"
+    msg+=f"Адрес Б: {data['adress_b']}\n"
+    msg+=f"Стоимость доставки: {data['cash']}\n"
     builder = create_customer_send_form_buttons()
     await message.answer(msg,reply_markup=builder.as_markup())
 
@@ -335,12 +336,12 @@ async def customer_form_button_callback(callback: types.CallbackQuery,state: FSM
         await callback.answer()
         msg = "<b>ЗАЯВКА</b>\n"+"-"*30+"\n"
         data = await state.get_data()
-        msg+=f"Магазин: {data["store_name"]}\n"
+        msg+=f"Магазин: {data['store_name']}\n"
         city = city_info[data["city"]]["Город"]
         msg+=f"Город: {city}\n"
-        msg+=f"Адрес А: {data["adress_a"]}\n"
-        msg+=f"Адрес Б: {data["adress_b"]}\n"
-        msg+=f"Стоимость: {data["cash"]}\n"
+        msg+=f"Адрес А: {data['adress_a']}\n"
+        msg+=f"Адрес Б: {data['adress_b']}\n"
+        msg+=f"Стоимость: {data['cash']}\n"
         msg = await bot.send_message(chat_id = group_id, text = msg)
         newreq = {
             "username_customer":callback.from_user.username,
@@ -367,15 +368,15 @@ async def customer_form_button_callback(callback: types.CallbackQuery,state: FSM
         await state.update_data(city = cities)
         await state.update_data(n = 1)
         builder = await create_choose_city_buttons(state)
-        await callback.message.answer("Выберите город из которого бутет произведена доставка. Если вашего города нет, то выбирайте ближайший.",reply_markup = builder.as_markup())    
+        await callback.message.answer("Выберите город из которого бутет произведена доставка. Если вашего города нет, то выбирайте ближайший.",reply_markup = builder.as_markup())
         await callback.answer()
     else:
         await callback.message.delete()
         await state.clear()
         await callback.answer()
-        
-        
-        
+
+
+
 #===================================Колбек кнопок на заявке===================================
 @router.callback_query(F.data.startswith("request_"))
 async def customer_forms_button_callback(callback: types.CallbackQuery,state: FSMContext,bot: Bot):
@@ -385,24 +386,24 @@ async def customer_forms_button_callback(callback: types.CallbackQuery,state: FS
     else:
         form = await database.get_request(int(action))
         if form["user_id_customer"]==callback.from_user.id:
-            callback.message.answer("Вы не можете отвечать на свою заявку.")
+            await callback.message.answer("Вы не можете отвечать на свою заявку.")
             return
         msg = "<b>На вашу заявку ответили</b>\n"+"-"*30+"\n"
-        msg+=f"Магазин: {form["store_name"]}\n"
-        msg+=f"Адрес А: {form["adress_a"]}\n"
-        msg+=f"Адрес Б: {form["adress_b"]}\n"
-        msg+=f"Стоимость: {form["price"]}\n"
-        msg+=f"Код: {form["code"]}\n"
+        msg+=f"Магазин: {form['store_name']}\n"
+        msg+=f"Адрес А: {form['adress_a']}\n"
+        msg+=f"Адрес Б: {form['adress_b']}\n"
+        msg+=f"Стоимость: {form['price']}\n"
+        msg+=f"Код: {form['code']}\n"
         builder = status_work()
         await bot.edit_message_reply_markup(chat_id=form["chat_id"],message_id=form["message_id"],reply_markup=builder.as_markup())
         builder = customer_finish(int(action))
         await bot.send_message(chat_id = form["user_id_customer"], text = msg,reply_markup=builder.as_markup())
         msg = "<b>Вы ответили на заявку</b>\n"+"-"*30+"\n"
-        msg+=f"Магазин: {form["store_name"]}\n"
-        msg+=f"Адрес А: {form["adress_a"]}\n"
-        msg+=f"Адрес Б: {form["adress_b"]}\n"
-        msg+=f"Стоимость: {form["price"]}\n"
-        msg+=f"Код: {form["code"]}\n"
+        msg+=f"Магазин: {form['store_name']}\n"
+        msg+=f"Адрес А: {form['adress_a']}\n"
+        msg+=f"Адрес Б: {form['adress_b']}\n"
+        msg+=f"Стоимость: {form['price']}\n"
+        msg+=f"Код: {form['code']}\n"
         builder = courier_finish(int(action))
         await bot.send_message(chat_id = callback.from_user.id, text = msg,reply_markup=builder.as_markup())
         await database.change_status_work(int(action),"work")
@@ -443,5 +444,5 @@ async def all_form_button_callback(callback: types.CallbackQuery,state: FSMConte
         if form["status_work"]=="finish":
             await callback.answer("Заявка уже завершена.")
             return
-        await database.change_status_work(id,"sent")
-        await bot.send_message(chat_id=form["user_id_customer"],text=f"Курьер отказался от заявки с кодом <b>{form["code"]}</b>.\nЗаявка снова открыта.")
+        await database.change_status_work(int(id),"sent")
+        await bot.send_message(chat_id=form["user_id_customer"],text=f"Курьер отказался от заявки с кодом <b>{form['code']}</b>.\nЗаявка снова открыта.")

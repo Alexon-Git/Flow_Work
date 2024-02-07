@@ -38,3 +38,4 @@ scope = ['https://www.googleapis.com/auth/spreadsheets']
 credentials = Credentials.from_service_account_file(f'{home}/cred.json')
 client = gspread.authorize(credentials.with_scopes(scope))
 sheet = client.open_by_url('https://docs.google.com/spreadsheets/d/1ZdLjtdhlsD3B1wVDQFRfTo3NpvqGyudoitUJLcBuSNo/edit#gid=0')
+worksheet_city = sheet.worksheet('City')
