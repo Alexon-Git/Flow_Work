@@ -80,8 +80,13 @@ async def customer_button_callback(callback: types.CallbackQuery,state: FSMConte
         await callback.answer()
     elif action == "newform":
         await state.set_state(City.city)
-        cities = worksheet_city.col_values(1)[1:]
-        await state.update_data(city = cities)
+        cities = []
+        for i in city_info:
+            if i["Город"] != "":
+                cities.append(i["Город"])
+            else:
+                break
+        await state.update_data(city=cities)
         await state.update_data(n = 1)
         builder = await create_choose_city_buttons(state)
         await callback.message.answer("Выберите город из которого бутет произведена доставка. Если вашего города нет, то выбирайте ближайший.",reply_markup = builder.as_markup())
@@ -150,8 +155,7 @@ async def customer_email(message: Message,state: FSMContext):
             cities.append(i["Город"])
         else:
             break
-    await state.update_data(city = cities)
-    await state.update_data(n = 1)
+    await state.update_data({"city": cities, "n": 1})
     builder = await create_choose_city_buttons(state)
     await message.answer("Выберите ваш город. Если вашего города нет, то выбирайте ближайший.",reply_markup = builder.as_markup())
 
@@ -307,7 +311,7 @@ async def form_store(message: Message,state: FSMContext):
     await state.update_data(cash = message.text)
     msg = "Верны ли введенные данные?\n"+"-"*30+"\n"
     data = await state.get_data()
-    city = worksheet_city.col_values(1)[1:][data["city"]]
+    city = city_info[data["city"]]["Город"]
     msg+=f"Город: {city}\n"
     msg+=f"Магазин: {data['store_name']}\n"
     msg+=f"Адрес А: {data['adress_a']}\n"
@@ -364,8 +368,13 @@ async def customer_form_button_callback(callback: types.CallbackQuery,state: FSM
     elif action == "repeat":
         await callback.message.delete()
         await state.set_state(City.city)
-        cities = worksheet_city.col_values(1)[1:]
-        await state.update_data(city = cities)
+        cities = []
+        for i in city_info:
+            if i["Город"] != "":
+                cities.append(i["Город"])
+            else:
+                break
+        await state.update_data(city=cities)
         await state.update_data(n = 1)
         builder = await create_choose_city_buttons(state)
         await callback.message.answer("Выберите город из которого бутет произведена доставка. Если вашего города нет, то выбирайте ближайший.",reply_markup = builder.as_markup())

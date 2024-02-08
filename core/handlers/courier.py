@@ -17,7 +17,7 @@ from core.message.text import get_amount
 
 router = Router()
 global city_info
-city_info = []
+city_info = worksheet_city.get_all_records()
 
 
 class CourierState(StatesGroup):
@@ -204,8 +204,7 @@ async def courier_contact(message:Message,state: FSMContext,bot:Bot):
     
 #===================================Цикл уведомлений===================================
 async def check_date(bot: Bot):
-    global city_info
-    city_info = worksheet_city.get_all_records()
+
     users = await database.get_notification_one(str(date.today() + datetime.timedelta(days=1)))
     for user in users:
         try:
@@ -223,4 +222,6 @@ async def check_date(bot: Bot):
         finally:
             await database.change_notification_zero(user["user_id"], True)
     await asyncio.sleep(21600)
+    global city_info
+    city_info = worksheet_city.get_all_records()
     await check_date(bot)
