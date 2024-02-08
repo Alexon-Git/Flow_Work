@@ -8,6 +8,10 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import LabeledPrice, ReplyKeyboardRemove
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+
+
 from core.keyboards.reply import *
 from core.filters.Filters import *
 from core.database import database
@@ -16,8 +20,9 @@ from core.settings import worksheet_city
 from core.message.text import get_amount
 
 router = Router()
+scheduler = AsyncIOScheduler()
 global city_info
-city_info = worksheet_city.get_all_records()
+city_info = []
 
 
 class CourierState(StatesGroup):
@@ -183,7 +188,6 @@ async def courier_contact(message:Message,state: FSMContext,bot:Bot):
     await state.clear()
     expire_date = datetime.datetime.now() + datetime.timedelta(days=1)
     chat_id = city_info[data["city"]]["chat id"]
-    print(chat_id)
     link = await bot.create_chat_invite_link(chat_id=chat_id, expire_date= int( expire_date.timestamp()),member_limit= 1)
     await message.answer(f"Регистрация успешно завершена. Вы получили 14д пробного использования.\nСсылка на вступление в группу города: {link.invite_link}",reply_markup=ReplyKeyboardRemove())
     new_courier =  {
@@ -204,7 +208,8 @@ async def courier_contact(message:Message,state: FSMContext,bot:Bot):
     
 #===================================Цикл уведомлений===================================
 async def check_date(bot: Bot):
-
+    global city_info
+    city_info = worksheet_city.get_all_records()
     users = await database.get_notification_one(str(date.today() + datetime.timedelta(days=1)))
     for user in users:
         try:
@@ -221,7 +226,4 @@ async def check_date(bot: Bot):
             pass
         finally:
             await database.change_notification_zero(user["user_id"], True)
-    await asyncio.sleep(21600)
-    global city_info
-    city_info = worksheet_city.get_all_records()
-    await check_date(bot)
+    

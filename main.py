@@ -3,7 +3,7 @@ import logging
 import asyncio
 import datetime as dt
 from aiogram import Bot, Dispatcher
-
+from core.handlers.courier import scheduler
 from core.settings import home
 from core.handlers.basic import *
 from core.administrate import router_admin
@@ -31,10 +31,11 @@ logging.critical("Сообщения уровня CRITICAL, серьезная �
 async def start():
     bot = Bot(token=settings.bots.bot_token, parse_mode='HTML')
     dp = Dispatcher()
-
+    scheduler.start()
+    scheduler.add_job(courier.check_date, "interval", seconds=21600, args=(bot,))
     # dp.message.register(start_command, Command(commands=['start']))
     dp.include_routers(main_router, router_admin)
-    asyncio.ensure_future(courier.check_date(bot))
+    #asyncio.ensure_future(courier.check_date(bot))
     try:
         await dp.start_polling(bot)
     finally:
@@ -42,9 +43,9 @@ async def start():
 
 
 if __name__ == "__main__":
-    #asyncio.run(start())
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    asyncio.ensure_future(start())
-    loop.run_forever()
+    asyncio.run(start())
+    # loop = asyncio.new_event_loop()
+    # asyncio.set_event_loop(loop)
+    # asyncio.ensure_future(start())
+    # loop.run_forever()
     # запуск машины .\.venv\Scripts\activate
