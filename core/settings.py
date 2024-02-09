@@ -20,6 +20,8 @@ class Bots:
 @dataclass
 class Settings:
     bots: Bots
+    db_user: str
+    db_password: str
 
 def get_settings(path: str):
     evn = Env()
@@ -29,7 +31,9 @@ def get_settings(path: str):
         bots=Bots(
             bot_token=evn.str("BOT_TOKEN"),
             admin_id=evn.int("ADMIN_ID")
-        )
+        ),
+        db_user=evn.str("DB_USER"),
+        db_password=evn.str("DB_PASSWORD")
     )
 
 settings = get_settings('config')
