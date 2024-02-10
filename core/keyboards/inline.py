@@ -74,6 +74,13 @@ def create_customer_buttons(registration: bool) -> InlineKeyboardBuilder:
         ) 
     return builder
 
+def create_newform_button()->InlineKeyboardButton:
+    builder = InlineKeyboardBuilder()
+    builder.row(InlineKeyboardButton(
+        text="Новая заявка",
+        callback_data="customer_newform")
+    )
+    return builder
 
 def create_customer_send_form_buttons() -> InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()

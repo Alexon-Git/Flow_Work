@@ -187,7 +187,7 @@ async def courier_contact(message:Message,state: FSMContext,bot:Bot):
     expire_date = datetime.datetime.now() + datetime.timedelta(days=1)
     chat_id = city_info[data["city"]]["chat id"]
     link = await bot.create_chat_invite_link(chat_id=chat_id, expire_date= int( expire_date.timestamp()),member_limit= 1)
-    await message.answer(f"Регистрация успешно завершена. Вы получили 14д пробного использования.\nСсылка на вступление в группу города: {link.invite_link}",reply_markup=ReplyKeyboardRemove())
+    await message.answer(f"Регистрация успешно завершена. Вы получили 14д пробного использования.\n➖➖➖➖➖➖➖➖➖➖➖➖➖\nВ стартовом меню в разделе 'Курьер' вы можете продлить подписку.\n➖➖➖➖➖➖➖➖➖➖➖➖➖Ссылка на вступление в группу города: {link.invite_link}",reply_markup=ReplyKeyboardRemove())
     new_courier =  {
         "username" : message.from_user.first_name,
         "user_id":message.from_user.id,

@@ -38,20 +38,20 @@ class City(StatesGroup):
     n = ()
 
 
-@router.message(Command(commands=["testmenu"]))
-async def testmenu(message:Message):
-    text = ""
-    text+="╭ 👤 <b>Профиль заказчика:</b>\n"
-    text+="├  📄 <b>Завершенных заявок: </b>0\n"
-    text+="╰ 📝 <b>Активных заявок: </b>0\n"
-    text+="➖➖➖➖➖➖➖➖➖➖➖➖➖\n"
-    text+="╭ ✏️ <b>ФИО:</b> Кулаков Дмитрий Николаевич\n"
-    text+="├  💼 <b>Организация: </b>NIL\n"
-    text+="╰ 🏙️ <b>Город: </b>Новосибирск\n"
-    text+="➖➖➖➖➖➖➖➖➖➖➖➖➖\n"
-    text+="🕒 Регистрация: 2023-03-17"
-    
-    await message.answer(text)
+# @router.message(Command(commands=["testmenu"]))
+# async def testmenu(message:Message):
+#     text = ""
+#     text+="╭ 👤 <b>Профиль заказчика:</b>\n"
+#     text+="├  📄 <b>Завершенных заявок: </b>0\n"
+#     text+="╰ 📝 <b>Активных заявок: </b>0\n"
+#     text+="➖➖➖➖➖➖➖➖➖➖➖➖➖\n"
+#     text+="╭ ✏️ <b>ФИО:</b> Кулаков Дмитрий Николаевич\n"
+#     text+="├  💼 <b>Организация: </b>NIL\n"
+#     text+="╰ 🏙️ <b>Город: </b>Новосибирск\n"
+#     text+="➖➖➖➖➖➖➖➖➖➖➖➖➖\n"
+#     text+="🕒 Регистрация: 2023-03-17"
+#
+#     await message.answer(text)
 
 
 
@@ -220,8 +220,9 @@ async def customer_contact(message:Message,state: FSMContext,bot:Bot):
     await state.clear()
     expire_date = datetime.datetime.now() + datetime.timedelta(days=1)
     chat_id = city_info[data["city"]]["chat id"]
-    link = await bot.create_chat_invite_link(chat_id=chat_id, expire_date= int( expire_date.timestamp()),member_limit= 1)
-    await message.answer(f"Регистрация успешно завершена. Теперь вы можете создавать свои заявки.\nСсылка на вступление в группу города: {link.invite_link}",reply_markup=ReplyKeyboardRemove())
+    link = await bot.create_chat_invite_link(chat_id=chat_id, expire_date= int( expire_date.timestamp()),member_limit= 1,)
+    builder = create_contact_button()
+    await message.answer(f"Регистрация успешно завершена. Теперь вы можете создавать свои заявки в стартовом меню или по кнопке ниже.\n➖➖➖➖➖➖➖➖➖➖➖➖➖\nСсылка на вступление в группу города: {link.invite_link}",reply_markup=builder.as_markup())
     new_customer =  {
         "username" : message.from_user.username,
         "user_id":message.from_user.id,
