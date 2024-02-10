@@ -66,8 +66,9 @@ async def courier_button_callback(callback: types.CallbackQuery,state: FSMContex
         chat_id= callback.message.chat.id,
         title="Оплата подписки курьеров",
         description="Предоставляет возможность откликаться на заявки доставки",
-        payload="bot",
         provider_token="381764678:TEST:77526",
+        payload="bot",
+
         currency="rub",
         prices=[LabeledPrice(
             label = "Оплата подписки",
