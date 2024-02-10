@@ -80,6 +80,10 @@ def create_newform_button()->InlineKeyboardBuilder:
         text="Новая заявка",
         callback_data="customer_newform")
     )
+    builder.add(InlineKeyboardButton(
+        text="Мои заявки",
+        callback_data=f"customer_forms")
+    )
     return builder
 
 def create_customer_send_form_buttons() -> InlineKeyboardBuilder:
