@@ -168,6 +168,7 @@ async def customer_button_callback(callback: types.CallbackQuery,state: FSMConte
         await state.set_state(CourierState.phone)
         builder = create_contact_button()
         await callback.message.answer("Отправьте ваш номер телефона",reply_markup=builder.as_markup(resize_keyboard=True))
+        await callback.message.edit_reply_markup(reply_markup=None)
         await callback.answer()
 #===================================Город===================================
 # @router.message(CourierState.city)
@@ -188,6 +189,7 @@ async def courier_contact(message:Message,state: FSMContext,bot:Bot):
     expire_date = datetime.datetime.now() + datetime.timedelta(days=1)
     chat_id = city_info[data["city"]]["chat id"]
     link = await bot.create_chat_invite_link(chat_id=chat_id, expire_date= int( expire_date.timestamp()),member_limit= 1)
+    await message.edit_reply_markup(reply_markup=None)
     await message.answer(f"Регистрация успешно завершена. Вы получили 14д пробного использования.\n➖➖➖➖➖➖➖➖➖➖➖➖➖\nВ стартовом меню в разделе 'Курьер' вы можете продлить подписку.\n➖➖➖➖➖➖➖➖➖➖➖➖➖Ссылка на вступление в группу города: {link.invite_link}",reply_markup=ReplyKeyboardRemove())
     new_courier =  {
         "username" : message.from_user.first_name,
