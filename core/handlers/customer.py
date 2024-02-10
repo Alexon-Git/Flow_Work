@@ -357,11 +357,11 @@ async def customer_form_button_callback(callback: types.CallbackQuery,state: FSM
             "price":int(data["cash"]),
             "store_name":data["store_name"],
             "message_id":msg.message_id,
-            "chat_id":group_id
+            "chat_id":chat_id
         }
         await database.set_request(newreq)
         builder = create_form_buttons(await database.get_request_id(msg.message_id))
-        await bot.edit_message_reply_markup(chat_id=group_id,message_id=msg.message_id,reply_markup=builder.as_markup())
+        await bot.edit_message_reply_markup(chat_id=chat_id,message_id=msg.message_id,reply_markup=builder.as_markup())
         await state.clear()
         await callback.answer()
     elif action == "repeat":
