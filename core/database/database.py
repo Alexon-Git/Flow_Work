@@ -12,7 +12,7 @@ async def connect() -> asyncpg.Connection:
                                  port="5432",
                                  user= settings.db_user,
                                  password=settings.db_password,
-                                 database="order_aggregator")
+                                 database="orders_aggregator")
 
 
 ########################_SET_DATA_##################################################################
