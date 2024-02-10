@@ -394,7 +394,7 @@ async def customer_forms_button_callback(callback: types.CallbackQuery,state: FS
     else:
         form = await database.get_request(int(action))
         if form["user_id_customer"]==callback.from_user.id:
-            await callback.message.answer("Вы не можете отвечать на свою заявку.")
+            await callback.answer("Вы не можете отвечать на свою заявку.")
             return
         msg = "<b>На вашу заявку ответили</b>\n"+"-"*30+"\n"
         msg+=f"Магазин: {form['store_name']}\n"
@@ -454,3 +454,6 @@ async def all_form_button_callback(callback: types.CallbackQuery,state: FSMConte
             return
         await database.change_status_work(int(id),"sent")
         await bot.send_message(chat_id=form["user_id_customer"],text=f"Курьер отказался от заявки с кодом <b>{form['code']}</b>.\nЗаявка снова открыта.")
+        builder = create_form_buttons(await database.get_request_id(form["message_id"]))
+        await bot.edit_message_reply_markup(chat_id=form["chat_id"], message_id=form["message_id"],
+                                            reply_markup=builder.as_markup())
