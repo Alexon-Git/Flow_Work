@@ -12,7 +12,6 @@ from core.keyboards.reply import *
 from core.filters.Filters import *
 from core.database import database
 from core.keyboards.inline import *
-from core.settings import worksheet_city
 from core.handlers.courier import city_info
 
 router = Router()
@@ -346,7 +345,7 @@ async def customer_form_button_callback(callback: types.CallbackQuery,state: FSM
         msg+=f"Адрес А: {data['adress_a']}\n"
         msg+=f"Адрес Б: {data['adress_b']}\n"
         msg+=f"Стоимость: {data['cash']}\n"
-        msg = await bot.send_message(chat_id = group_id, text = msg)
+        msg = await bot.send_message(chat_id = chat_id, text = msg)
         newreq = {
             "username_customer":callback.from_user.username,
             "user_id_customer":callback.from_user.id,

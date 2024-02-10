@@ -1,5 +1,4 @@
 import math
-import asyncio
 import datetime
 from datetime import date
 
@@ -11,7 +10,6 @@ from aiogram.types import LabeledPrice, ReplyKeyboardRemove
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 
-
 from core.keyboards.reply import *
 from core.filters.Filters import *
 from core.database import database
@@ -21,8 +19,7 @@ from core.message.text import get_amount
 
 router = Router()
 scheduler = AsyncIOScheduler()
-global city_info
-city_info = []
+city_info = worksheet_city.get_all_records()
 
 
 class CourierState(StatesGroup):
@@ -39,6 +36,7 @@ async def courier_callback(callback: types.CallbackQuery,bot:Bot):
     if await database.check_courier(user_id = callback.from_user.id):
         expire_date = datetime.datetime.now() + datetime.timedelta(days=1)
         courier = await database.get_courier(callback.from_user.id)
+        chat_id = 0
         for i in city_info:
             if i["Город"]==courier["city"]:
                 chat_id = i["chat id"]
