@@ -221,8 +221,8 @@ async def customer_contact(message:Message,state: FSMContext,bot:Bot):
     await state.update_data(phone=message.contact.phone_number)
     data = await state.get_data()
     await state.clear()
-    await message.answer("ㅤ",reply_markup=ReplyKeyboardRemove())
-    await message.delete()
+    msg = await message.answer("ㅤ",reply_markup=ReplyKeyboardRemove())
+    await msg.delete()
     expire_date = datetime.datetime.now() + datetime.timedelta(days=1)
     chat_id = city_info[data["city"]]["chat id"]
     link = await bot.create_chat_invite_link(chat_id=chat_id, expire_date=int(expire_date.timestamp()), member_limit=1)
