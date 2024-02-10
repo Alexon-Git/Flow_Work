@@ -200,7 +200,7 @@ async def customer_button_callback(callback: types.CallbackQuery,state: FSMConte
         await state.update_data(city = int(action))
         await state.set_state(CustomerRegistration.phone)
         builder = create_contact_button()
-        await callback.message.answer("Отправьте ваш номер телефона",reply_markup=builder.as_markup(resize_keyboard=True,one_time_keyboard = True))
+        await callback.message.answer("Отправьте ваш номер телефона",reply_markup=builder.as_markup(resize_keyboard=True))
         await callback.message.edit_reply_markup(reply_markup=None)
         await callback.answer()
 
@@ -223,11 +223,10 @@ async def customer_contact(message:Message,state: FSMContext,bot:Bot):
     expire_date = datetime.datetime.now() + datetime.timedelta(days=1)
     chat_id = city_info[data["city"]]["chat id"]
     link = await bot.create_chat_invite_link(chat_id=chat_id, expire_date= int( expire_date.timestamp()),member_limit= 1)
-    # msg = await message.answer("delete",reply_markup=ReplyKeyboardRemove())
-    # await msg.delete()
+    msg = await message.answer(f"Регистрация успешно завершена. Теперь вы можете создавать свои заявки в стартовом меню или по кнопке ниже.\n➖➖➖➖➖➖➖➖➖➖➖➖➖\nСсылка на вступление в группу города: {link.invite_link}",reply_markup=ReplyKeyboardRemove())
     builder = create_newform_button()
-    await message.answer(f"Регистрация успешно завершена. Теперь вы можете создавать свои заявки в стартовом меню или по кнопке ниже.\n➖➖➖➖➖➖➖➖➖➖➖➖➖\nСсылка на вступление в группу города: {link.invite_link}",reply_markup=builder.as_markup())
-    #await bot.edit_message_reply_markup(chat_id=msg.chat.id,message_id=msg.message_id,reply_markup=builder.as_markup())
+    await msg.edit_text(reply_markup=builder.as_markup())
+    #await bot.edit(chat_id=msg.chat.id,message_id=msg.message_id,reply_markup=builder.as_markup())
     new_customer = {
         "username" : message.from_user.username,
         "user_id":message.from_user.id,
