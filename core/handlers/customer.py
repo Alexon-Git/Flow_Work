@@ -456,11 +456,14 @@ async def all_form_button_callback(callback: types.CallbackQuery,state: FSMConte
             await callback.answer("Заявка завершена.")
     else:
         form = await database.get_request(int(id))
-        if form["status_work"]=="finish":
-            await callback.answer("Заявка уже завершена.")
+        if form["status_work"]=="finish" or form["status_work"]=="sent":
+            await callback.answer("Нельзя отменить эту заявку.")
             return
         await database.change_status_work(int(id),"sent")
+        await callback.message.delete()
+
         await bot.send_message(chat_id=form["user_id_customer"],text=f"Курьер отказался от заявки с кодом <b>{form['code']}</b>.\nЗаявка снова открыта.")
         builder = create_form_buttons(await database.get_request_id(form["message_id"]))
         await bot.edit_message_reply_markup(chat_id=form["chat_id"], message_id=form["message_id"],
                                             reply_markup=builder.as_markup())
+        await callback.answer("Вы отменили заявку.")

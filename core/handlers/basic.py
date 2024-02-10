@@ -30,7 +30,7 @@ async def start_handler(message: Message, state: FSMContext):
 @router.callback_query(F.data == "start", StateFilter(None))
 async def start_call_handler(call: CallbackQuery, state: FSMContext):
     await state.clear()
-    builder = await create_start_buttons(call.message.from_user.id)
+    builder = await create_start_buttons(call.from_user.id)
     await call.message.edit_text(get_text_start_mess(), reply_markup=builder.as_markup())
     return
 

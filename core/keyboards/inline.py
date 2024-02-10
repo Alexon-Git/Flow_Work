@@ -213,6 +213,7 @@ def del_admin(admins: list):
     buttons = []
     for i in admins:
         buttons.append([InlineKeyboardButton(text=i["username"], callback_data=f"del_{i['user_id']}")])
+    buttons.append([InlineKeyboardButton(text="Отмена", callback_data="admin")])
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
 
