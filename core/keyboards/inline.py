@@ -7,12 +7,6 @@ from core.settings import settings
 from core.database.database import get_id_admin
 
 
-start_button = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text="Посмотреть отзыв", callback_data="courier")],
-    [InlineKeyboardButton(text="Оставить отзыв", callback_data="customer")]    
-])
-
-
 async def create_start_buttons(user_id: int) -> InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
     builder.row(InlineKeyboardButton(
@@ -24,7 +18,7 @@ async def create_start_buttons(user_id: int) -> InlineKeyboardBuilder:
         callback_data="courier")
     )
     if user_id in (await get_id_admin()):
-        builder.add(InlineKeyboardButton(text='Администратору', callback_data="admin"))
+        builder.row(InlineKeyboardButton(text='Администратору', callback_data="admin", color="primary"))
     return builder
 
 

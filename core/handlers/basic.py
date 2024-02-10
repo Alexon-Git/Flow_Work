@@ -1,5 +1,5 @@
 from aiogram import Router, F
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 from aiogram.filters import CommandStart, StateFilter
 
 from core.keyboards.inline import *
@@ -28,11 +28,11 @@ async def start_handler(message: Message, state: FSMContext):
 
 
 @router.callback_query(F.data == "start", StateFilter(None))
-async def start_call_handler(message: Message, state: FSMContext):
+async def start_call_handler(call: CallbackQuery, state: FSMContext):
     await state.clear()
-    builder = await create_start_buttons(message.from_user.id)
-    await message.answer(get_text_start_mess(), reply_markup=builder.as_markup())
-    if not (await database.check_user(user_id=message.from_user.id)):
-        await database.set_new_user(user_id=message.from_user.id, username=message.from_user.first_name)
+    builder = await create_start_buttons(call.message.from_user.id)
+    await call.message.answer(get_text_start_mess(), reply_markup=builder.as_markup())
+    if not (await database.check_user(user_id=call.message.from_user.id)):
+        await database.set_new_user(user_id=call.message.from_user.id, username=call.message.from_user.first_name)
     return
 
