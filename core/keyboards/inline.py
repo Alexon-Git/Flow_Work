@@ -18,7 +18,7 @@ async def create_start_buttons(user_id: int) -> InlineKeyboardBuilder:
         callback_data="courier")
     )
     if user_id in (await get_id_admin()):
-        builder.row(InlineKeyboardButton(text='Администратору', callback_data="admin", color="primary"))
+        builder.row(InlineKeyboardButton(text='Администратору', callback_data="admin"))
     return builder
 
 
