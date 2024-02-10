@@ -82,6 +82,10 @@ def create_newform_button()->InlineKeyboardBuilder:
     )
     return builder
 
+def create_contactI_button()->InlineKeyboardBuilder:
+    builder = InlineKeyboardBuilder()
+    builder.add(InlineKeyboardButton(text="Поделиться номером", request_contact=True))
+    return builder
 def create_customer_send_form_buttons() -> InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
     builder.row(InlineKeyboardButton(
