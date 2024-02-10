@@ -225,7 +225,7 @@ async def customer_contact(message:Message,state: FSMContext,bot:Bot):
     link = await bot.create_chat_invite_link(chat_id=chat_id, expire_date= int( expire_date.timestamp()),member_limit= 1)
     msg = await message.answer(f"Регистрация успешно завершена. Теперь вы можете создавать свои заявки в стартовом меню или по кнопке ниже.\n➖➖➖➖➖➖➖➖➖➖➖➖➖\nСсылка на вступление в группу города: {link.invite_link}",reply_markup=ReplyKeyboardRemove())
     builder = create_newform_button()
-    await msg.edit_text(text=f"Регистрация успешно завершена. Теперь вы можете создавать свои заявки в стартовом меню или по кнопке ниже.\n➖➖➖➖➖➖➖➖➖➖➖➖➖\nСсылка на вступление в группу города: {link.invite_link}",reply_markup= builder.as_markup())
+    await msg.edit_text(text=f"Регистрация успешно завершена. Теперь вы можете создавать свои заявки в стартовом меню или по кнопке ниже.\n➖➖➖➖➖➖➖➖➖➖➖➖➖\nСсылка на вступление в группу города: {link.invite_link}")
 
     new_customer = {
         "username" : message.from_user.username,
