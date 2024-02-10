@@ -67,7 +67,7 @@ async def courier_button_callback(callback: types.CallbackQuery,state: FSMContex
         title="Оплата подписки курьеров",
         description="Предоставляет возможность откликаться на заявки доставки",
         payload="bot",
-        provider_token="381764678:TEST:76657",
+        provider_token="381764678:TEST:77526",
         currency="rub",
         prices=[LabeledPrice(
             label = "Оплата подписки",
