@@ -278,8 +278,8 @@ async def customer_button_callback(callback: types.CallbackQuery,state: FSMConte
         await state.set_state(NewForm.store_name)
         await state.update_data(city = int(action))
         builder = create_none_store_button()
+        await callback.message.answer("Введите название магазина из которого будет производиться доставка.\n➖➖➖➖➖➖➖➖➖➖➖➖➖\nЕсли доставка не из магазина, то нажмите соотвествующую кнопку.",reply_markup=builder.as_markup(resize_keyboard=True))
         await callback.message.edit_reply_markup(reply_markup=None)
-        await callback.message.edit_text("Введите название магазина из которого будет производиться доставка.\n\nЕсли доставка не из магазина, то нажмите соотвествующую кнопку.",reply_markup=builder.as_markup(resize_keyboard=True))
         await callback.answer()
 
 
