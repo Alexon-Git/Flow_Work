@@ -403,7 +403,12 @@ async def customer_forms_button_callback(callback: types.CallbackQuery,state: FS
         if form["user_id_customer"]==callback.from_user.id:
             await callback.answer("Вы не можете отвечать на свою заявку.")
             return
-        msg = "<b>На вашу заявку ответили</b>\n"+"-"*30+"\n"
+        courier = await database.get_courier(callback.from_user.id)
+        msg = "<b>На вашу заявку ответили</b>\n"+"➖➖➖➖➖➖➖➖➖➖➖➖➖"+"\n"
+        msg+="Информация о курьере:\n"
+        msg+=f"ФИО: {courier["fio"]}\n"
+        msg+=f"Номер телефона: {courier["phone"]}\n"
+        msg+="➖➖➖➖➖➖➖➖➖➖➖➖➖\n"
         msg+=f"Магазин: {form['store_name']}\n"
         msg+=f"Адрес А: {form['adress_a']}\n"
         msg+=f"Адрес Б: {form['adress_b']}\n"
