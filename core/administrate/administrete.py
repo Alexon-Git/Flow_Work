@@ -1,3 +1,5 @@
+import asyncio
+
 from aiogram import Router, F, Bot
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
@@ -9,9 +11,7 @@ from core.keyboards import inline as kbi
 from core.database.database import get_id_admin, get_data_admin, deleted_admin, get_user
 from core.message.text import get_text_start_mess, set_text_start_mess, get_amount, set_amount
 
-
 router = Router()
-router.message.filter(F.from_user.id.in_(get_id_admin()))
 
 
 class EditStartMess(StatesGroup):
@@ -75,7 +75,7 @@ class EditAmount(StatesGroup):
 
 @router.callback_query(F.data == "edit_amount")
 async def check_amount(call: CallbackQuery, state: FSMContext):
-    await call.message.edit_text(f"Стоимость подписки на данный момент: {get_amount()}\n"
+    await call.message.edit_text(f"Стоимость подписки на данный момент: {get_amount()/100}\n"
                                  "Желаете изменить её?", reply_markup=kbi.confirmation())
     await state.set_state(EditAmount.CheckOldAmount)
 
@@ -98,7 +98,7 @@ async def check_new_mess(mess: Message, state: FSMContext, bot: Bot):
         except:
             pass
         await state.update_data({"amount": new_amount})
-        await mess.answer(f"Новая стоимость: {new_amount/100}\n\nСохраняем?",
+        await mess.answer(f"Новая стоимость: {new_amount}\n\nСохраняем?",
                           reply_markup=kbi.confirmation())
     except:
         await mess.answer("Данные не являются числом или содержат лишние символы!")

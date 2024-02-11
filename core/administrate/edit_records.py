@@ -1,3 +1,4 @@
+import asyncio
 from aiogram import Router, F, Bot
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
@@ -9,7 +10,6 @@ import core.database.database as db
 
 
 subrouter = Router()
-# subrouter.message.filter(F.from_user.id.in_(db.get_id_admin()))
 
 
 class EditRecord(StatesGroup):

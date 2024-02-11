@@ -1,16 +1,14 @@
 import asyncio
 from typing import Union
-from environs import Env
 import asyncpg
 from asyncpg.exceptions import *
 
 from core.settings import settings
 
 async def connect() -> asyncpg.Connection:
-    env = Env()
     return await asyncpg.connect(host="localhost",
                                  port="5432",
-                                 user= settings.db_user,
+                                 user=settings.db_user,
                                  password=settings.db_password,
                                  database="orders_aggregator")
 
