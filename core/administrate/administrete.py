@@ -101,7 +101,7 @@ async def check_new_mess(mess: Message, state: FSMContext, bot: Bot):
         await mess.answer(f"Новая стоимость: {new_amount}\n\nСохраняем?",
                           reply_markup=kbi.confirmation())
     except:
-        await mess.answer("Данные не являются числом или содержат лишние символы!")
+        await mess.answer("Данные не являются числом или содержат лишние символы!", reply_markup=kbi.cancel())
 
 
 @router.callback_query(F.data == "yes", EditAmount.SetAmount)

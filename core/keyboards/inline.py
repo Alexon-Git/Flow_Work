@@ -188,7 +188,8 @@ def choice_people():
     buttons = [
         [InlineKeyboardButton(text="Курьеры", callback_data="notif_courier")],
         [InlineKeyboardButton(text="Заказчики", callback_data="notif_customer")],
-        [InlineKeyboardButton(text="Все", callback_data="notif_all")]
+        [InlineKeyboardButton(text="Все", callback_data="notif_all")],
+        [InlineKeyboardButton(text="Отмена", callback_data="admin")]
     ]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
@@ -204,6 +205,7 @@ def admin_choice_people():
     buttons = [
         [InlineKeyboardButton(text="Курьеры", callback_data="view_courier")],
         [InlineKeyboardButton(text="Заказчики", callback_data="view_customer")],
+        [InlineKeyboardButton(text="Отмена", callback_data="admin")]
     ]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard

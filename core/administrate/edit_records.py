@@ -65,7 +65,7 @@ async def view_data_record(mess: Message, state: FSMContext, bot: Bot):
         elif check_cust:
             data_record = await db.get_customer(int(mess.text))
         else:
-            await mess.answer("Такого пользователя нет в базе данных!")
+            await mess.answer("Такого пользователя нет в базе данных!", reply_markup=kbi.cancel())
             return
         text_mess = ("Информация:\n"
                      f"ФИО: {data_record['fio']}\n"
@@ -78,7 +78,7 @@ async def view_data_record(mess: Message, state: FSMContext, bot: Bot):
         await mess.answer(text_mess, reply_markup=kbi.admin_edit_record(check_cust))
         await state.update_data({"user_id": int(mess.text)})
     except:
-        await mess.answer("Данные не являются telegram_id!")
+        await mess.answer("Данные не являются telegram_id!", reply_markup=kbi.cancel())
 
 
 @subrouter.callback_query(F.data.split("-")[0] == "edit", EditRecord.ChoiceId)
@@ -89,7 +89,7 @@ async def set_new_data_record(call: CallbackQuery, state: FSMContext):
 
 
 @subrouter.message(EditRecord.SetData)
-async def check_new_data_record(mess: Message, state: FSMContext, bot: Bot):
+async def check_new_data_record(mess: Message, state: FSMContext):
     data = await state.get_data()
     if data["type"] == "courier":
         data_record = await db.get_courier(data["user_id"])
