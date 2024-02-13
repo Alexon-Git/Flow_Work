@@ -1,6 +1,6 @@
 from aiogram.filters import BaseFilter
 from aiogram.types import Message
-from email_validate import validate
+# from email_validate import validate
 
 
 class FioFilter(BaseFilter):
@@ -10,4 +10,4 @@ class FioFilter(BaseFilter):
 
 class EmailFilter(BaseFilter):
     async def __call__(self, message: Message) -> bool:  
-        return validate(message.text)
+        return "@" in message.text
