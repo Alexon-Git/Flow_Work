@@ -39,11 +39,11 @@ async def start():
     storage = RedisStorage.from_url(REDIS_DSN, key_builder=DefaultKeyBuilder(with_bot_id=True),
                                     data_ttl=timedelta(days=1.0), state_ttl=timedelta(days=1.0))
     dp = Dispatcher(storage=storage)
+    dp.include_routers(main_router, router_admin)
     dp.message.filter(F.chat.type == 'private')
     scheduler.start()
     scheduler.add_job(courier.check_date, "interval", seconds=21600, args=(bot,))
     # dp.message.register(start_command, Command(commands=['start']))
-    dp.include_routers(main_router, router_admin)
     #asyncio.ensure_future(courier.check_date(bot))
     try:
         await dp.start_polling(bot)
