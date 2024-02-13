@@ -2,7 +2,11 @@ import os
 import logging
 import asyncio
 import datetime as dt
+from datetime import timedelta
+
 from aiogram import Bot, Dispatcher
+from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
+
 from core.handlers.courier import scheduler
 from core.settings import home
 from core.handlers.basic import *
@@ -31,7 +35,10 @@ logging.critical("Сообщения уровня CRITICAL, серьезная �
 
 async def start():
     bot = Bot(token=settings.bots.bot_token, parse_mode='HTML')
-    dp = Dispatcher()
+    REDIS_DSN = "redis://127.0.0.1:6379"
+    storage = RedisStorage.from_url(REDIS_DSN, key_builder=DefaultKeyBuilder(with_bot_id=True),
+                                    data_ttl=timedelta(days=1.0), state_ttl=timedelta(days=1.0))
+    dp = Dispatcher(storage=storage)
     dp.message.filter(F.chat.type == 'private')
     dp.callback_query.filter(F.chat.type == 'private')
     scheduler.start()
