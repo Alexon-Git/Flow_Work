@@ -32,6 +32,8 @@ logging.critical("Сообщения уровня CRITICAL, серьезная �
 async def start():
     bot = Bot(token=settings.bots.bot_token, parse_mode='HTML')
     dp = Dispatcher()
+    dp.message.filter(F.chat.type == 'private')
+    dp.callback_query.filter(F.chat.type == 'private')
     scheduler.start()
     scheduler.add_job(courier.check_date, "interval", seconds=21600, args=(bot,))
     # dp.message.register(start_command, Command(commands=['start']))
