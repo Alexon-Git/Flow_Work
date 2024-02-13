@@ -15,7 +15,7 @@ from core.filters.Filters import *
 from core.database import database
 from core.keyboards.inline import *
 from core.settings import worksheet_city
-from core.message.text import get_amount
+from core.message.text import get_amount, get_text_start_mess
 
 router = Router()
 scheduler = AsyncIOScheduler()
@@ -81,7 +81,8 @@ async def courier_button_callback(callback: types.CallbackQuery,state: FSMContex
         await callback.answer()
     elif action == "back":
         builder = await create_start_buttons(callback.from_user.id)
-        await callback.message.edit_text("Приветственное сообщение", reply_markup=builder.as_markup())
+        await callback.message.edit_text(get_text_start_mess(), reply_markup=builder.as_markup())
+
 @router.pre_checkout_query()
 async def pre_checkout_query_handler(pre_checkout_query: types.PreCheckoutQuery,bot:Bot):
     await bot.answer_pre_checkout_query(pre_checkout_query.id,ok = True)

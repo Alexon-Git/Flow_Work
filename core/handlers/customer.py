@@ -14,6 +14,7 @@ from core.filters.Filters import *
 from core.database import database
 from core.keyboards.inline import *
 from core.handlers.courier import city_info
+from core.message.text import get_text_start_mess
 
 router = Router()
 #group_id = -1002057238567
@@ -72,7 +73,7 @@ async def customer_callback(callback: types.CallbackQuery,bot:Bot):
     
 #===================================Колбек Меню Заказчика===================================
 @router.callback_query(F.data.startswith("customer_"))
-async def customer_button_callback(callback: types.CallbackQuery,state: FSMContext):
+async def customer_button_callback(callback: types.CallbackQuery, state: FSMContext):
     action = callback.data.split("_")[1]
     if action == "registration":
         await state.set_state(CustomerRegistration.fio)
@@ -93,7 +94,7 @@ async def customer_button_callback(callback: types.CallbackQuery,state: FSMConte
         await callback.answer()
     elif action == "back":
         builder = await create_start_buttons(callback.from_user.id)
-        await callback.message.edit_text("Приветственное сообщение", reply_markup=builder.as_markup())
+        await callback.message.edit_text(get_text_start_mess(), reply_markup=builder.as_markup())
     elif action=="forms":
         forms = await database.get_customer_sent_request(callback.from_user.id)
         for form in forms:
