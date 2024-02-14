@@ -35,6 +35,7 @@ class NewForm(StatesGroup):
     adress_a = State()
     adress_b = State()
     cash = State()
+    n = ()
 class City(StatesGroup):
     city = State()
     n = ()
@@ -80,7 +81,7 @@ async def customer_button_callback(callback: types.CallbackQuery, state: FSMCont
         await callback.message.answer("Введите ваше ФИО")
         await callback.answer()
     elif action == "newform":
-        await state.set_state(City.city)
+        await state.set_state(NewForm.city)
         cities = []
         for i in city_info:
             if i["Город"] != "":
@@ -244,7 +245,7 @@ async def customer_contact(message:Message,state: FSMContext,bot:Bot):
 
 
 #===================================Колбек кнопок городов в заявке===================================
-@router.callback_query(F.data.startswith("city_"),City.city)
+@router.callback_query(F.data.startswith("city_"),NewForm.city)
 async def customer_button_callback(callback: types.CallbackQuery,state: FSMContext,bot: Bot):
     action = callback.data.split("_")[1]
     if action == "next":

@@ -156,6 +156,11 @@ async def create_choose_city_buttons(state: FSMContext) -> InlineKeyboardBuilder
     )
     return builder
 
+def state_cancel()->InlineKeyboardBuilder:
+    builder = InlineKeyboardBuilder()
+    builder.add(InlineKeyboardButton(text="Отменить действие",callback_data="state_cancel"))
+    return builder
+
 
 def status_work()->InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
