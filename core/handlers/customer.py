@@ -14,7 +14,7 @@ from core.filters.Filters import *
 from core.database import database
 from core.keyboards.inline import *
 from core.handlers.courier import city_info
-from core.handlers.basic import start_handler
+from core.handlers.basic import start_call_handler
 from core.message.text import get_text_start_mess
 
 router = Router()
@@ -408,10 +408,7 @@ async def customer_form_button_callback(callback: types.CallbackQuery,state: FSM
 @router.callback_query(F.data == "cancel_form")
 async def cancel_form(callback: types.CallbackQuery,state:FSMContext):
     await state.clear()
-    await callback.message.delete()
-    await callback.answer("Вы отменили заполнение новой заявки.")
-    await start_handler(callback.message,state)
-
+    await start_call_handler(callback,state)
 
 #===================================Колбек кнопок на заявке===================================
 @router.callback_query(F.data.startswith("request_"))
