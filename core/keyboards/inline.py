@@ -68,7 +68,19 @@ def create_customer_buttons(registration: bool) -> InlineKeyboardBuilder:
         ) 
     return builder
 
-def create_newform_button()->InlineKeyboardBuilder:
+def cancel_form_button()->InlineKeyboardBuilder:
+    builder = InlineKeyboardBuilder()
+    builder.row(InlineKeyboardButton(text="Отмена",callback_data="cancel_form"))
+    return builder
+
+def create_none_store_button()->InlineKeyboardBuilder:
+    builder = InlineKeyboardBuilder()
+    builder.add(InlineKeyboardButton(text="Не из магазина.",callback_data="none_store"))
+    builder.row(InlineKeyboardButton(text="Отмена", callback_data="cancel_form"))
+    return builder
+
+
+def create_newform_button(link:str)->InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
     builder.row(InlineKeyboardButton(
         text="Новая заявка",
@@ -78,6 +90,7 @@ def create_newform_button()->InlineKeyboardBuilder:
         text="Мои заявки",
         callback_data=f"customer_forms")
     )
+    builder.row(InlineKeyboardButton(text="Вступить в группу", url=link))
     return builder
 
 def create_customer_send_form_buttons() -> InlineKeyboardBuilder:
@@ -92,7 +105,7 @@ def create_customer_send_form_buttons() -> InlineKeyboardBuilder:
     ))
     builder.row(InlineKeyboardButton(
         text="Отмена",
-        callback_data="form_break"
+        callback_data="cancel_form"
     ))
     return builder
 
@@ -121,7 +134,6 @@ def confirmation(txt_y: str = "Да", txt_n: str = "Нет", cd_y: str = "yes"):
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
 
-
 async def create_choose_city_buttons(state: FSMContext) -> InlineKeyboardBuilder:
     data = await state.get_data()
     n = data["n"]
@@ -148,7 +160,7 @@ async def create_choose_city_buttons(state: FSMContext) -> InlineKeyboardBuilder
     )
     builder.add(InlineKeyboardButton(
         text="Отмена",
-        callback_data=f"city_break")
+        callback_data=f"cancel_form")
     )
     builder.add(InlineKeyboardButton(
         text="-->",
