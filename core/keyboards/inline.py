@@ -26,7 +26,7 @@ def create_courier_buttons(registration: bool, link=None) -> InlineKeyboardBuild
     builder = InlineKeyboardBuilder()
     builder.row(InlineKeyboardButton(
         text="Назад",
-        callback_data=f"courier_back")
+        callback_data=f"start")
     )
     if registration:
         builder.add(InlineKeyboardButton(
@@ -50,7 +50,7 @@ def create_customer_buttons(registration: bool) -> InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
     builder.row(InlineKeyboardButton(
         text="Назад",
-        callback_data=f"customer_back")
+        callback_data=f"start")
     )
     if registration:
         builder.add(InlineKeyboardButton(

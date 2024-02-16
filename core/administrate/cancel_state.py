@@ -4,6 +4,7 @@ from aiogram.types import Message, CallbackQuery
 
 from core.keyboards.inline import state_cancel
 
+
 subrouter = Router()
 @subrouter.message()
 async def check_state(message: Message, state: FSMContext):
@@ -12,6 +13,7 @@ async def check_state(message: Message, state: FSMContext):
         return
     builder = state_cancel()
     await message.answer(f"Бот находится в ожидании ответа. Посмотрите историю сообщений для дальнейшего ответа или нажмите кнопку отмены ожидания ниже",reply_markup=builder.as_markup())
+
 
 @subrouter.callback_query(F.data == "state_cancel")
 async def cancel_state(callback: CallbackQuery, state: FSMContext):

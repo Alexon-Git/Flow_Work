@@ -79,9 +79,6 @@ async def courier_button_callback(callback: types.CallbackQuery,state: FSMContex
         request_timeout=10
         )
         await callback.answer()
-    elif action == "back":
-        builder = await create_start_buttons(callback.from_user.id)
-        await callback.message.edit_text(get_text_start_mess(), reply_markup=builder.as_markup())
 
 @router.pre_checkout_query()
 async def pre_checkout_query_handler(pre_checkout_query: types.PreCheckoutQuery,bot:Bot):

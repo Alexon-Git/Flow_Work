@@ -62,7 +62,6 @@ class City(StatesGroup):
 @router.callback_query(F.data=="customer")
 async def customer_callback(callback: types.CallbackQuery,bot:Bot):
     if await database.check_customer(user_id = callback.from_user.id):
-        expire_date = datetime.datetime.now() + datetime.timedelta(days=1)
         builder = create_customer_buttons(True)
         message = f"Меню заказчиков.\nЗдесь вы можете просмотреть свои заявки или создать новую."
     else:
@@ -93,9 +92,6 @@ async def customer_button_callback(callback: types.CallbackQuery, state: FSMCont
         builder = await create_choose_city_buttons(state)
         await callback.message.answer("Выберите город из которого бутет произведена доставка. Если вашего города нет, то выбирайте ближайший.",reply_markup = builder.as_markup())
         await callback.answer()
-    elif action == "back":
-        builder = await create_start_buttons(callback.from_user.id)
-        await callback.message.edit_text(get_text_start_mess(), reply_markup=builder.as_markup())
     elif action=="forms":
         forms = await database.get_customer_sent_request(callback.from_user.id)
         for form in forms:
@@ -123,7 +119,7 @@ async def customer_button_callback(callback: types.CallbackQuery, state: FSMCont
         
         
 #===================================ФИО===================================
-@router.message(CustomerRegistration.fio,FioFilter())
+@router.message(CustomerRegistration.fio, FioFilter())
 async def customer_fio(message: Message,state: FSMContext):
     await state.update_data(fio = message.text)
     await message.answer("Введите название вашей организации")
@@ -391,7 +387,6 @@ async def customer_form_button_callback(callback: types.CallbackQuery,state: FSM
         await callback.message.delete()
         await state.clear()
         await callback.answer()
-    await callback.message.edit_reply_markup(reply_markup=None)
 
 
 #===================================Колбек кнопок на заявке===================================
@@ -448,7 +443,7 @@ async def customer_forms_button_callback(callback: types.CallbackQuery,state: FS
 
 #===================================Колбек кнопок на заявке в работе===================================
 @router.callback_query(F.data.startswith("finish_"))
-async def all_form_button_callback(callback: types.CallbackQuery,state: FSMContext,bot: Bot):
+async def all_form_button_callback(callback: types.CallbackQuery,bot: Bot):
     autor = callback.data.split("_")[1]
     id = callback.data.split("_")[2]
     if autor=="customer":
