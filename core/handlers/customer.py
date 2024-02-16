@@ -77,7 +77,7 @@ async def customer_button_callback(callback: types.CallbackQuery, state: FSMCont
     await callback.message.edit_reply_markup(reply_markup=None)
     if action == "registration":
         await state.set_state(CustomerRegistration.fio)
-        await callback.message.answer("Введите ваше ФИО")
+        await callback.message.edit_text("Введите ваше ФИО",reply_markup=None)
         await callback.answer()
     elif action == "newform":
         await state.set_state(NewForm.city)
@@ -90,9 +90,10 @@ async def customer_button_callback(callback: types.CallbackQuery, state: FSMCont
         await state.update_data(city=cities)
         await state.update_data(n = 1)
         builder = await create_choose_city_buttons(state)
-        await callback.message.answer("Выберите город из которого бутет произведена доставка. Если вашего города нет, то выбирайте ближайший.",reply_markup = builder.as_markup())
+        await callback.message.edit_text("Выберите город из которого бутет произведена доставка. Если вашего города нет, то выбирайте ближайший.",reply_markup = builder.as_markup())
         await callback.answer()
     elif action=="forms":
+        await callback.message.delete()
         forms = await database.get_customer_sent_request(callback.from_user.id)
         for form in forms:
             if form["status_work"]=="work":
