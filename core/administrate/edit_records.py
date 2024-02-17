@@ -76,7 +76,7 @@ async def view_data_record(mess: Message, state: FSMContext, bot: Bot):
         if check_cust and data["type"] == "customer":
             text_mess += f"Компания: {data_record['organization']}"
         text_mess += "\nМожно изменить:"
-        await mess.answer(text_mess, reply_markup=kbi.admin_edit_record(check_cust))
+        await mess.answer(text_mess, reply_markup=kbi.admin_edit_record((check_cust and data["type"] == "customer")))
         await state.update_data({"user_id": int(mess.text)})
     except ValueError:
         await mess.answer("Данные не являются telegram_id!", reply_markup=kbi.cancel())
