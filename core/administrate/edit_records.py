@@ -1,4 +1,4 @@
-import asyncio
+import aiogram.exceptions
 from aiogram import Router, F, Bot
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
@@ -43,11 +43,11 @@ async def choice_id_records(call: CallbackQuery, state: FSMContext):
 @subrouter.callback_query(F.data == "no", EditRecord.DeletedRecord)
 @subrouter.callback_query(F.data == "no", EditRecord.CheckMessage)
 async def choice_id_records(call: CallbackQuery, state: FSMContext):
-        msg = await call.message.edit_text("Существующие записи:\n"
-                                     "https://docs.google.com/spreadsheets/d/1ZdLjtdhlsD3B1wVDQFRfTo3NpvqGyudoitUJLcBuSNo/edit#gid=1109808180\n\n"
-                                     "Введите TG_ID нужного человека для редактирования", reply_markup=kbi.cancel())
-        await state.update_data({"del": msg.message_id})
-        await state.set_state(EditRecord.ChoiceId)
+    msg = await call.message.edit_text("Существующие записи:\n"
+                                 "https://docs.google.com/spreadsheets/d/1ZdLjtdhlsD3B1wVDQFRfTo3NpvqGyudoitUJLcBuSNo/edit#gid=1109808180\n\n"
+                                 "Введите TG_ID нужного человека для редактирования", reply_markup=kbi.cancel())
+    await state.update_data({"del": msg.message_id})
+    await state.set_state(EditRecord.ChoiceId)
 
 
 @subrouter.message(EditRecord.ChoiceId)
@@ -58,11 +58,12 @@ async def view_data_record(mess: Message, state: FSMContext, bot: Bot):
     except:
         pass
     try:
+        data = await state.get_data()
         check_cust = await db.check_customer(int(mess.text))
         check_cour = await db.check_courier(int(mess.text))
-        if check_cour:
+        if check_cour and data["type"] == "courier":
             data_record = await db.get_courier(int(mess.text))
-        elif check_cust:
+        elif check_cust and data["type"] == "customer":
             data_record = await db.get_customer(int(mess.text))
         else:
             await mess.answer("Такого пользователя нет в базе данных!", reply_markup=kbi.cancel())
@@ -72,12 +73,12 @@ async def view_data_record(mess: Message, state: FSMContext, bot: Bot):
                      f"Телефон: {data_record['phone']}\n"
                      f"Почта: {data_record['email']}\n"
                      f"Город: {data_record['city']}\n")
-        if check_cust:
+        if check_cust and data["type"] == "customer":
             text_mess += f"Компания: {data_record['organization']}"
         text_mess += "\nМожно изменить:"
         await mess.answer(text_mess, reply_markup=kbi.admin_edit_record(check_cust))
         await state.update_data({"user_id": int(mess.text)})
-    except:
+    except ValueError:
         await mess.answer("Данные не являются telegram_id!", reply_markup=kbi.cancel())
 
 
