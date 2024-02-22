@@ -290,6 +290,16 @@ async def get_id_all_user() -> list[int]:
     return [i["user_id"] for i in rows]
 
 
+async def get_all_price() -> list[int]:
+    conn = await connect()
+    query = 'SELECT price FROM public.request WHERE request.status_work=$1'
+    try:
+        rows = await conn.fetch(query, "sent")
+    finally:
+        await conn.close()
+    return [i["price"] for i in rows]
+
+
 # #######################_CHECK_DATA_################################################################ #
 async def check_courier(user_id: int) -> bool:
     """Функция проверки регистрации курьера"""
@@ -441,11 +451,3 @@ async def update_customer(data: dict):
     return
 
 
-#   ПРоверка наличия айди в БД
-async def main():
-    root = await deleted_courier(14111)
-    return
-
-
-if __name__ == "__main__":
-    asyncio.run(main())

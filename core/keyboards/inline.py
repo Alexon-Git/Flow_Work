@@ -116,10 +116,13 @@ def admin_menu(user_id: int) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text="Изменить стартовое сообщение", callback_data="edit_start_mess")],
         [InlineKeyboardButton(text="Изменить стоимость подписки", callback_data="edit_amount")],
         [InlineKeyboardButton(text="Просмотр Заказчиков/Курьеров", callback_data="view_record")],
+        [InlineKeyboardButton(text="Просмотр статистики", callback_data="view_statistics")],
+        [InlineKeyboardButton(text="Мин. и сред. ставка", callback_data="bet")],
+        [InlineKeyboardButton(text="Обновить список городов", callback_data="update_city")]
     ]
     if user_id == settings.bots.admin_id:
-        buttons.append([InlineKeyboardButton(text="Добавить администратора", callback_data="add_admin")])
-        buttons.append([InlineKeyboardButton(text="Удалить администратора", callback_data="del_admin")])
+        buttons.append([InlineKeyboardButton(text="Добавить админа", callback_data="add_admin"),
+                        InlineKeyboardButton(text="Удалить админа", callback_data="del_admin")])
     buttons.append([InlineKeyboardButton(text="В меню", callback_data="start")])
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
@@ -133,6 +136,7 @@ def confirmation(txt_y: str = "Да", txt_n: str = "Нет", cd_y: str = "yes"):
     ]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
+
 
 async def create_choose_city_buttons(state: FSMContext) -> InlineKeyboardBuilder:
     data = await state.get_data()
@@ -276,3 +280,51 @@ def create_form_buttons(id: int):
         callback_data="request_chat"
     ))
     return builder
+
+
+def edit_bet():
+    buttons = [
+        [InlineKeyboardButton(text="Изменить", callback_data="bet_edit")],
+        [InlineKeyboardButton(text="Отмена", callback_data="admin")]
+    ]
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return keyboard
+
+
+def create_choose_city_buttons_stat(n: int, city: list):
+    n-=1
+    n*=6
+    builder = InlineKeyboardBuilder()
+    for i in range(6):
+        if n+i <= len(city)-1:
+            button = InlineKeyboardButton(
+                text=city[n+i],
+                callback_data=f"city_{n+i}")
+        else:
+            button = InlineKeyboardButton(
+                text="➖",
+                callback_data=f"none")
+        if (n+i)%3 == 0 or (n+i)%3==3:
+            builder.row(button)
+        else:
+            builder.add(button)
+    builder.row(InlineKeyboardButton(
+        text="<--",
+        callback_data=f"city_back")
+    )
+    builder.add(InlineKeyboardButton(
+        text="Отмена",
+        callback_data=f"cancel_form")
+    )
+    builder.add(InlineKeyboardButton(
+        text="-->",
+        callback_data=f"city_next")
+    )
+    return builder.as_markup()
+
+
+def custom_btn(text: str, cldata: str):
+    buttons = [[InlineKeyboardButton(text=text, callback_data=cldata)]]
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return keyboard
+

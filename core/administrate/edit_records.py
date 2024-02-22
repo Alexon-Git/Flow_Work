@@ -34,7 +34,7 @@ async def choice_id_records(call: CallbackQuery, state: FSMContext):
                                      "https://docs.google.com/spreadsheets/d/1ZdLjtdhlsD3B1wVDQFRfTo3NpvqGyudoitUJLcBuSNo/edit#gid=1109808180\n\n"
                                      "Введите TG_ID нужного человека для редактирования", reply_markup=kbi.cancel())
         await state.set_state(EditRecord.ChoiceId)
-        await state.update_data({"del":msg.message_id, "type": call.data.split("_")[-1]})
+        await state.update_data({"del": msg.message_id, "type": call.data.split("_")[-1]})
     except IndexError:
         await call.message.edit_text("В базе отсутствуют записи для данного раздела",
                                      reply_markup=kbi.admin_menu(call.from_user.id))

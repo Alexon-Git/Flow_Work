@@ -18,8 +18,7 @@ from core.settings import check_city, city_info
 from core.message.text import get_amount
 
 router = Router()
-scheduler = AsyncIOScheduler()
-
+scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
 
 
 class CourierState(StatesGroup):
@@ -175,7 +174,7 @@ async def customer_button_callback(callback: types.CallbackQuery,state: FSMConte
 #     await state.set_state(CourierState.phone)
 #     builder = create_contact_button()
 #     await message.answer("Отправьте ваш номер телефона",reply_markup=builder.as_markup(resize_keyboard=True))
-    
+
 
 
 #===================================Номер и завершение регистрации===================================

@@ -399,6 +399,7 @@ async def customer_form_button_callback(callback: types.CallbackQuery,state: FSM
         await bot.edit_message_reply_markup(chat_id=chat_id,message_id=msg.message_id,reply_markup=builder.as_markup())
         await state.clear()
         await callback.answer()
+        set_city_stat("record_new", chat_id)
     elif action == "repeat":
         await callback.message.delete()
         await state.set_state(NewForm.city)
@@ -476,6 +477,7 @@ async def customer_forms_button_callback(callback: types.CallbackQuery,state: FS
         pass
     finally:
         await callback.answer("Заявка отменена.")
+        set_city_stat("record_cancel", callback.message.chat.id)
 
 #===================================Колбек кнопок на заявке в работе===================================
 @router.callback_query(F.data.startswith("finish_"))
@@ -492,6 +494,7 @@ async def all_form_button_callback(callback: types.CallbackQuery,bot: Bot):
             pass
         finally:
             await callback.answer("Заявка завершена.")
+            set_city_stat("record_done", callback.message.chat.id)
     else:
         form = await database.get_request(int(id))
         if form["status_work"]=="finish" or form["status_work"]=="sent":
