@@ -20,3 +20,13 @@ def set_amount(new_amount: int):
     with open(f"{home}/message/amount.txt", "w", encoding="utf-8") as f:
         f.write(str(new_amount))
 
+
+def get_bet() -> int:
+    with open(f"{home}/message/bet.txt", "r", encoding="utf-8") as f:
+        return int(f.read())
+
+
+def set_bet(new_amount: int):
+    with open(f"{home}/message/bet.txt", "w", encoding="utf-8") as f:
+        f.write(str(new_amount))
+
