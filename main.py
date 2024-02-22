@@ -42,7 +42,7 @@ async def start():
     dp.include_routers(main_router, router_admin)
     dp.message.filter(F.chat.type == 'private')
     scheduler.start()
-    scheduler.add_job(courier.check_date, "interval", seconds=21600, args=(bot,))
+    scheduler.add_job(courier.check_date, "interval", seconds=21600)
     # dp.message.register(start_command, Command(commands=['start']))
     #asyncio.ensure_future(courier.check_date(bot))
     try:

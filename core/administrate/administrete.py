@@ -6,14 +6,14 @@ from aiogram.types import CallbackQuery, Message
 from aiogram.filters.state import State, StatesGroup
 from aiogram.filters import StateFilter
 
-from core.settings import settings, home
+from core.settings import settings, home, check_city
 from core.keyboards import inline as kbi
-from core.database.database import get_id_admin, get_data_admin, deleted_admin, get_user
-from core.message.text import get_text_start_mess, set_text_start_mess, get_amount, set_amount
+from core.database.database import get_id_admin, get_data_admin, deleted_admin, get_user, get_all_price
+from core.message.text import get_text_start_mess, set_text_start_mess, get_amount, set_amount, get_bet, set_bet
 
 router = Router()
 
-
+bot = Bot(token=settings.bots.bot_token, parse_mode='HTML')
 class EditStartMess(StatesGroup):
     CheckOldMess = State()
     SetMessage = State()
@@ -108,7 +108,7 @@ async def check_new_mess(mess: Message, state: FSMContext, bot: Bot):
 async def set_new_start_mess(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     set_amount(data["amount"]*100)
-    await call.message.edit_text("Новое сообщение сохранено!", reply_markup=kbi.admin_menu(call.from_user.id))
+    await call.message.edit_text("Новая стоимость сохранена!", reply_markup=kbi.admin_menu(call.from_user.id))
     await state.clear()
 
 
@@ -148,3 +148,56 @@ async def del_admin(call: CallbackQuery):
 async def del_admin(call: CallbackQuery):
     await deleted_admin(int(call.data.split("_")[-1]))
     await call.message.edit_text("Администратор удален!", reply_markup=kbi.admin_menu(call.from_user.id))
+
+
+# #################################### Мин и сред ставка######################################### #
+class EditBet(StatesGroup):
+    SetAmount = State()
+
+
+@router.callback_query(F.data == "bet")
+async def check_bet(call: CallbackQuery, state: FSMContext):
+    list_price = await get_all_price()
+    average = round(sum(list_price) / len(list_price))
+    await call.message.edit_text(f"Минимальная установленная цена: {get_bet()}\n"
+                                 f"Средняя цена на данный момент: {average}",
+                                 reply_markup=kbi.edit_bet())
+
+
+@router.callback_query(F.data == "bet_edit")
+@router.callback_query(F.data == "no", EditAmount.SetAmount)
+async def set_new_bet(call: CallbackQuery, state: FSMContext):
+    msg = await call.message.edit_text(f"Отправьте новую стоимость числом:", reply_markup=kbi.cancel())
+    await state.update_data({"del": msg.message_id})
+    await state.set_state(EditAmount.SetAmount)
+
+
+@router.message(EditAmount.SetAmount)
+async def check_new_mess(mess: Message, state: FSMContext, bot: Bot):
+    try:
+        new_amount = int(mess.text)
+        try:
+            del_kb = (await state.get_data())["del"]
+            await bot.edit_message_reply_markup(mess.chat.id, del_kb, reply_markup=None)
+        except:
+            pass
+        await state.update_data({"amount": new_amount})
+        await mess.answer(f"Новая стоимость: {new_amount}\n\nСохраняем?",
+                          reply_markup=kbi.confirmation())
+    except ValueError:
+        await mess.answer("Данные не являются числом или содержат лишние символы!", reply_markup=kbi.cancel())
+
+
+@router.callback_query(F.data == "yes", EditAmount.SetAmount)
+async def set_new_start_mess(call: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    set_bet(data["amount"])
+    await call.message.edit_text("Новая стоимость сохранена!", reply_markup=kbi.admin_menu(call.from_user.id))
+    await state.clear()
+
+
+@router.callback_query(F.data == "update_city")
+async def update_city(call: CallbackQuery):
+    await check_city()
+    await call.answer("Список городов обновлен!")
+

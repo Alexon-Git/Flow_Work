@@ -14,12 +14,12 @@ from core.keyboards.reply import *
 from core.filters.Filters import *
 from core.database import database
 from core.keyboards.inline import *
-from core.settings import worksheet_city
-from core.message.text import get_amount, get_text_start_mess
+from core.settings import check_city, city_info
+from core.message.text import get_amount
 
 router = Router()
 scheduler = AsyncIOScheduler()
-city_info = worksheet_city.get_all_records()
+
 
 
 class CourierState(StatesGroup):
@@ -205,9 +205,9 @@ async def courier_contact(message:Message,state: FSMContext,bot:Bot):
     
     
 #===================================Цикл уведомлений===================================
-async def check_date(bot: Bot):
-    global city_info
-    city_info = worksheet_city.get_all_records()
+async def check_date():
+    bot = Bot(token=settings.bots.bot_token, parse_mode='HTML')
+    await check_city()
     users = await database.get_notification_one(str(date.today() + datetime.timedelta(days=1)))
     for user in users:
         try:

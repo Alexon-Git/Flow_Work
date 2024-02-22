@@ -6,6 +6,8 @@ from core.keyboards.inline import state_cancel
 
 
 subrouter = Router()
+
+
 @subrouter.message()
 async def check_state(message: Message, state: FSMContext):
     current_state = await state.get_state()

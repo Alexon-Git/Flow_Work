@@ -43,3 +43,10 @@ credentials = Credentials.from_service_account_file(f'{home}/cred.json')
 client = gspread.authorize(credentials.with_scopes(scope))
 sheet = client.open_by_url('https://docs.google.com/spreadsheets/d/1ZdLjtdhlsD3B1wVDQFRfTo3NpvqGyudoitUJLcBuSNo/edit#gid=0')
 worksheet_city = sheet.worksheet('City')
+
+city_info = worksheet_city.get_all_records()
+
+
+async def check_city():
+    global city_info
+    city_info = worksheet_city.get_all_records()

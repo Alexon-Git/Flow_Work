@@ -9,13 +9,14 @@ from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardRemove, CallbackQuery
 from aiogram.fsm.state import StatesGroup, State
 
+from core.settings import city_info
 from core.keyboards.reply import *
 from core.filters.Filters import *
 from core.database import database
 from core.keyboards.inline import *
-from core.handlers.courier import city_info
+from core.statistics.basic import set_city_stat
 from core.handlers.basic import start_call_handler
-from core.message.text import get_text_start_mess
+from core.message.text import get_text_start_mess, get_bet
 
 router = Router()
 #group_id = -1002057238567
@@ -287,7 +288,7 @@ async def customer_button_callback(callback: types.CallbackQuery,state: FSMConte
 async def form_store(message: Message,state: FSMContext):
     await state.update_data(store_name = message.text)
     builder = cancel_form_button()
-    msg = await message.edit_text("Укажите адрес точки из которой будет произведена доставка (Пункт А)",reply_markup=builder.as_markup())
+    msg = await message.answer("Укажите адрес точки из которой будет произведена доставка (Пункт А)",reply_markup=builder.as_markup())
     await state.update_data(last_msg=msg.message_id)
     await state.set_state(NewForm.adress_a)
 @router.callback_query(F.data == "none_store",NewForm.store_name)
@@ -319,7 +320,8 @@ async def form_adress_b(message: Message,state: FSMContext,bot:Bot):
     data = await state.get_data()
     await bot.edit_message_reply_markup(chat_id=message.chat.id, message_id=data["last_msg"], reply_markup=None)
     builder = cancel_form_button()
-    msg = await message.answer("Укажите стоимость доставки",reply_markup=builder.as_markup())
+    msg = await message.answer(f"Укажите стоимость доставки (минимальное значение {get_bet()})",
+                               reply_markup=builder.as_markup())
     await state.update_data(last_msg=msg.message_id)
     await state.set_state(NewForm.cash)
 
@@ -328,9 +330,20 @@ async def form_adress_b(message: Message,state: FSMContext,bot:Bot):
 #===================================Стоимость===================================
 @router.message(NewForm.cash)
 async def form_store(message: Message,state: FSMContext,bot:Bot):
-    await state.update_data(cash = message.text)
+    builder = cancel_form_button()
     data = await state.get_data()
     await bot.edit_message_reply_markup(chat_id=message.chat.id, message_id=data["last_msg"], reply_markup=None)
+    try:
+        if int(message.text)<get_bet():
+            msg = await message.answer(f"Минимально возможная стоимость на данный момент: {get_bet()}!", reply_markup=builder.as_markup())
+            await state.update_data(last_msg=msg.message_id)
+            return
+    except ValueError:
+        msg = await message.answer("Введенные данные не являются числом!", reply_markup=builder.as_markup())
+        await state.update_data(last_msg=msg.message_id)
+        return
+    await state.update_data(cash = message.text)
+    data["cash"] = message.text
     msg = "Верны ли введенные данные?\n"+"-"*30+"\n"
     city = city_info[data["city"]]["Город"]
     msg+=f"Город: {city}\n"
