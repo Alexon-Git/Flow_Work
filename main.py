@@ -1,22 +1,40 @@
 import os
 import logging
-import asyncio
 import datetime as dt
-from datetime import timedelta
+from aiohttp import web
 
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, types
 from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
 from core.handlers.courier import scheduler
-from core.settings import home
+from core.settings import settings
 from core.handlers.basic import *
 from core.administrate import router_admin
 from core.handlers import main_router, courier
 
+REDIS_DSN = "redis://127.0.0.1:6379"
+
+bot = Bot(token=settings.bots.bot_token, parse_mode='HTML')
+storage = RedisStorage.from_url(REDIS_DSN, key_builder=DefaultKeyBuilder(with_bot_id=True),
+                                    data_ttl=dt.timedelta(days=1.0), state_ttl=dt.timedelta(days=1.0))
+dp = Dispatcher(storage=storage)
+
+MAIN_BOT_PATH = f"/MAIN"
+BASE_URL = f"https://<ip>{MAIN_BOT_PATH}"
+WEB_SERVER_HOST = "127.0.0.1"
+WEB_SERVER_PORT = 8000
+
+dp.include_routers(main_router, router_admin)
+dp.message.filter(F.chat.type == 'private')
+
+home = os.path.dirname(__file__)
+
 if not os.path.exists(f"{home}/logging"):
     os.makedirs(f"{home}/logging")
-if not os.path.exists(f"{home}/statistics/data"):
-    os.makedirs(f"{home}/statistics/data")
+if not os.path.exists(f"{home}/core/statistics/data"):
+    os.makedirs(f"{home}/core/statistics/data")
+
 
 # Для отладки локально разкоментить
 # logging.basicConfig(level=logging.INFO)
@@ -24,7 +42,7 @@ if not os.path.exists(f"{home}/statistics/data"):
 # #Для отладки локально закоментить
 logger = logging.getLogger()
 logger.setLevel(logging.WARNING)
-handler = logging.FileHandler(f"{home}/logging/bot{dt.date.today()}.log", "a+", encoding="utf-8")
+handler = logging.FileHandler(f"{home}/logging/{dt.date.today()}", "a+", encoding="utf-8")
 handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
 logger.addHandler(handler)
 
@@ -35,28 +53,39 @@ logging.error("Сообщения уровня ERROR, программа не с
 logging.critical("Сообщения уровня CRITICAL, серьезная ошибка нарушающая дальнейшую работу")
 
 
-async def start():
-    bot = Bot(token=settings.bots.bot_token, parse_mode='HTML')
-    REDIS_DSN = "redis://127.0.0.1:6379"
-    storage = RedisStorage.from_url(REDIS_DSN, key_builder=DefaultKeyBuilder(with_bot_id=True),
-                                    data_ttl=timedelta(days=1.0), state_ttl=timedelta(days=1.0))
-    dp = Dispatcher(storage=storage)
-    dp.include_routers(main_router, router_admin)
-    dp.message.filter(F.chat.type == 'private')
+async def on_startup():
+    logger.error("Снятие и установка webhook")
     scheduler.start()
     scheduler.add_job(courier.check_date, "interval", seconds=21600)
-    # dp.message.register(start_command, Command(commands=['start']))
-    #asyncio.ensure_future(courier.check_date(bot))
-    try:
-        await dp.start_polling(bot)
-    finally:
-        await bot.session.close()
+    await bot.delete_webhook()
+    await bot.set_webhook(
+            url=BASE_URL,
+            certificate=types.FSInputFile("/etc/ssl/certs/Bot.crt"),  # Путь до сертификата
+            drop_pending_updates=True)
+
+    await bot.send_message(settings.bots.chat_id, "Бот запущен")
+    return
+
+
+async def on_shutdown():
+    logging.warning('Выключение бота')
+    await bot.delete_webhook()
+    await bot.send_message(settings.bots.chat_id, "Бот выключен")
+    return
+
+
+dp.startup.register(on_startup)
+dp.shutdown.register(on_shutdown)
+
+
+def main():
+    logger.error("Запуск веб-сервера")
+    app = web.Application()
+    SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=MAIN_BOT_PATH)
+    setup_application(app, dp, bot=bot)
+    web.run_app(app, host=WEB_SERVER_HOST, port=WEB_SERVER_PORT)
+    return
 
 
 if __name__ == "__main__":
-    asyncio.run(start())
-    # loop = asyncio.new_event_loop()
-    # asyncio.set_event_loop(loop)
-    # asyncio.ensure_future(start())
-    # loop.run_forever()
-    # запуск машины .\.venv\Scripts\activate
+    main()
