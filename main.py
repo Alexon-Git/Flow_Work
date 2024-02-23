@@ -21,7 +21,7 @@ storage = RedisStorage.from_url(REDIS_DSN, key_builder=DefaultKeyBuilder(with_bo
 dp = Dispatcher(storage=storage)
 
 MAIN_BOT_PATH = f"/MAIN"
-BASE_URL = f"https://<ip>{MAIN_BOT_PATH}"
+BASE_URL = f"https://89.223.69.249{MAIN_BOT_PATH}"
 WEB_SERVER_HOST = "127.0.0.1"
 WEB_SERVER_PORT = 8000
 
@@ -42,7 +42,7 @@ if not os.path.exists(f"{home}/core/statistics/data"):
 # #Для отладки локально закоментить
 logger = logging.getLogger()
 logger.setLevel(logging.WARNING)
-handler = logging.FileHandler(f"{home}/logging/{dt.date.today()}", "a+", encoding="utf-8")
+handler = logging.FileHandler(f"{home}/logging/{dt.date.today()}.log", "a+", encoding="utf-8")
 handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
 logger.addHandler(handler)
 

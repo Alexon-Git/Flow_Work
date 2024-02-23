@@ -15,6 +15,7 @@ home = os.path.dirname(__file__)
 class Bots:
     bot_token: str
     admin_id: int
+    chat_id: int
     # admin_id_2: int
 
 @dataclass
@@ -30,7 +31,8 @@ def get_settings(path: str):
     return Settings(
         bots=Bots(
             bot_token=evn.str("BOT_TOKEN"),
-            admin_id=evn.int("ADMIN_ID")
+            admin_id=evn.int("ADMIN_ID"),
+            chat_id=evn.int("CHAT_ID")
         ),
         db_user=evn.str("DB_USER"),
         db_password=evn.str("DB_PASSWORD")
