@@ -8,7 +8,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.filters.state import State, StatesGroup
 
 import core.keyboards.inline as kbi
-from core.database.database import get_id_courier, get_id_all_user, get_id_customer, get_id_admin
+from core.database.database import get_id_courier, get_id_all_user, get_id_customer
 
 subrouter = Router()
 
@@ -25,7 +25,7 @@ class NotificationProcess(StatesGroup):
 @subrouter.callback_query(F.data == "notif")
 async def start_notification(call: CallbackQuery, state: FSMContext):
     msg = await call.message.edit_text("Отправь мне текст сообщения которое надо разослать!",
-                                       reply_markup=kbi.cancel())
+                                       reply_markup=kbi.cancel_admin())
     await state.update_data({"del": msg.message_id})
     await state.set_state(NotificationProcess.SetMessage)
     return
@@ -48,7 +48,7 @@ async def set_message(mess: types.Message, state: FSMContext, bot: Bot):
 async def set_photo_yes(call: types.CallbackQuery, state: FSMContext):
     await state.set_state(NotificationProcess.SetPhoto)
     await call.message.edit_text("Отправьте изображение!\n<b>(Необходимо отправить только ОДНУ фотографию)</b>",
-                                 reply_markup=kbi.cancel())
+                                 reply_markup=kbi.cancel_admin())
     return
 
 

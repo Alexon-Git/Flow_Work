@@ -1,4 +1,5 @@
-from aiogram import Router, F
+from aiogram import Router, F, Bot
+from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import CommandStart, StateFilter
 
@@ -34,3 +35,39 @@ async def start_call_handler(call: CallbackQuery, state: FSMContext):
     await call.message.edit_text(get_text_start_mess(), reply_markup=builder.as_markup())
     return
 
+
+#===================================Обращение в поддержку===================================
+class SupportQuestion(StatesGroup):
+    SetQuestion = State()
+
+
+@router.callback_query(F.data == "support")
+async def support_chat(call: CallbackQuery, state: FSMContext, bot: Bot):
+    msg = await call.message.edit_text("Напишите свой вопрос или подробно опишите возникшую проблему:",
+                                 reply_markup=custom_btn("Отмена", "start"))
+    await state.set_state(SupportQuestion.SetQuestion)
+    await state.update_data({"del": msg.message_id})
+
+
+@router.message(SupportQuestion.SetQuestion)
+async def support_chat(mess: Message, state: FSMContext, bot: Bot):
+    data = await state.get_data()
+    try:
+        await bot.edit_message_reply_markup(mess.chat.id, data["del"], reply_markup=None)
+    except:
+        pass
+    await state.update_data({"text": mess.text})
+    await mess.answer("Проверьте свой вопрос перед отправкой:\n\n"
+                      f"{mess.text}", reply_markup=confirmation(canc_data="start"))
+
+
+@router.callback_query(F.data == "yes", SupportQuestion.SetQuestion)
+async def support_chat(call: CallbackQuery, state: FSMContext, bot: Bot):
+    data_state = await state.get_data()
+    await bot.send_message(settings.bots.chat_id,
+                           f"Пользователь:\n"
+                           f"Имя: [{call.from_user.first_name}](tg://user?id={call.from_user.id})\n"
+                           f"Ссылка: @{call.from_user.username}\n"
+                           f"Обращение:\n\n{data_state['text']}", parse_mode="Markdown")
+    await call.message.edit_text("Сообщение отправлено!")
+    await state.clear()

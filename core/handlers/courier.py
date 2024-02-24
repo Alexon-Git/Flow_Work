@@ -2,10 +2,11 @@ import math
 import datetime
 from datetime import date
 
-from aiogram import Router, types, F, Bot
+from aiogram import Router, types, F, Bot, Dispatcher
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.types import LabeledPrice, ReplyKeyboardRemove
+from aiogram.types import LabeledPrice, ReplyKeyboardRemove, CallbackQuery
+from aiogram.fsm.context import StorageKey
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -14,8 +15,8 @@ from core.keyboards.reply import *
 from core.filters.Filters import *
 from core.database import database
 from core.keyboards.inline import *
-from core.settings import check_city, city_info
 from core.message.text import get_amount
+from core.settings import check_city, city_info
 
 router = Router()
 scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
@@ -201,16 +202,63 @@ async def courier_contact(message:Message,state: FSMContext,bot:Bot):
         "notification_zero":False
     }
     await database.set_courier(new_courier)
-    
-    
+
+
+#===================================Задать вопрос===================================
+class Question(StatesGroup):
+    SetQuestion = State()
+
+
+@router.callback_query(F.data.startswith("request-chat"))
+async def request_chat(call: CallbackQuery, state: FSMContext, bot: Bot, dispatcher: Dispatcher):
+    data = await database.get_request(int(call.data.split("_")[-1]))
+    check = await database.check_courier(call.from_user.id)
+    if not check:
+        await call.answer("Вы не зарегистрированы в боте как курьер!")
+    elif data["user_id_customer"] == call.from_user.id:
+        await call.answer("Вы не можете задать вопрос себе!")
+    else:
+        await call.answer("Для продолжения перейдите в личный чат с ботом")
+        msg = await bot.send_message(call.from_user.id, "Напишите свой вопрос заказчику",
+                               reply_markup=custom_btn("Отмена", "start"))
+        data["del"] = msg.message_id
+        fsm_storage_key = StorageKey(bot_id=bot.id, user_id=call.from_user.id, chat_id=call.from_user.id)
+        await dispatcher.storage.set_state(fsm_storage_key, Question.SetQuestion)
+        await dispatcher.storage.update_data(fsm_storage_key, data)
+        await state.update_data({"data_record": data})
+
+
+@router.message(Question.SetQuestion)
+async def request_chat(mess: Message, state: FSMContext, bot: Bot):
+    data = await state.get_data()
+    try:
+        await bot.edit_message_reply_markup(mess.chat.id, data["del"], reply_markup=None)
+    except:
+        pass
+    if not check_test(mess.text):
+        await state.update_data({"text": mess.text})
+        await mess.answer("Проверьте свой вопрос перед отправкой:\n\n"
+                          f"{mess.text}", reply_markup=confirmation(canc_data="start"))
+    else:
+        msg = await mess.answer("Сообщение содержит запрещенную информацию! Уберите все ссылки и номера телефонов!")
+        await state.update_data({"del": msg.message_id})
+
+@router.callback_query(F.data.startswith("yes"), Question.SetQuestion)
+async def request_chat(call: CallbackQuery, state: FSMContext, bot: Bot):
+    data_state = await state.get_data()
+    await bot.send_message(data_state["user_id_customer"], f"Вопрос от курьера:\n\n{data_state['text']}",
+                           reply_markup=custom_btn("Ответить", f"answer_{call.from_user.id}"))
+    await call.message.edit_text("Сообщение отправлено!")
+    await state.clear()
+
 #===================================Цикл уведомлений===================================
 async def check_date():
     bot = Bot(token=settings.bots.bot_token, parse_mode='HTML')
-    await check_city()
+    check_city()
     users = await database.get_notification_one(str(date.today() + datetime.timedelta(days=1)))
     for user in users:
         try:
-            await bot.send_message(chat_id=user["user_id"],text="Через 1д. у вас закончится подписка курьера.")
+            await bot.send_message(chat_id=user["user_id"], text="Через 1д. у вас закончится подписка курьера.")
         except TelegramBadRequest:
             pass
         finally:
@@ -218,7 +266,7 @@ async def check_date():
     users = await database.get_notification_zero(str(date.today()))
     for user in users:
         try:
-            await bot.send_message(chat_id=user["user_id"],text="У вас закончилась подписка курьера.")
+            await bot.send_message(chat_id=user["user_id"], text="У вас закончилась подписка курьера.")
         except TelegramBadRequest:
             pass
         finally:

@@ -14,9 +14,10 @@ def set_city_stat(fild: str, city: int):
             data[fild] += 1
             json.dump(data, f)
         return
-    with open(f"{home}/statistics/data/{city}.json", "w+") as f:
+    with open(f"{home}/statistics/data/{city}.json", "r+") as f:
         data = json.load(f)
         data[fild] += 1
+        f.seek(0)
         json.dump(data, f)
 
 

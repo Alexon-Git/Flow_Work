@@ -17,6 +17,10 @@ async def create_start_buttons(user_id: int) -> InlineKeyboardBuilder:
         text="Курьер",
         callback_data="courier")
     )
+    builder.row(InlineKeyboardButton(
+        text="Написать в поддержку",
+        callback_data="support")
+    )
     if user_id in (await get_id_admin()):
         builder.row(InlineKeyboardButton(text='Администратору', callback_data="admin"))
     return builder
@@ -128,11 +132,13 @@ def admin_menu(user_id: int) -> InlineKeyboardMarkup:
     return keyboard
 
 
-def confirmation(txt_y: str = "Да", txt_n: str = "Нет", cd_y: str = "yes"):
+def confirmation(txt_y: str = "Да", txt_n: str = "Нет", cd_y: str = "yes", canc_data: str = "admin"):
     buttons = [
-        [InlineKeyboardButton(text=txt_y, callback_data=cd_y)],
-        [InlineKeyboardButton(text=txt_n, callback_data="no")],
-        [InlineKeyboardButton(text="Отмена", callback_data="admin")]
+        [
+            InlineKeyboardButton(text=txt_y, callback_data=cd_y),
+            InlineKeyboardButton(text=txt_n, callback_data="no")
+        ],
+        [InlineKeyboardButton(text="Отмена", callback_data=canc_data)]
     ]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
@@ -216,7 +222,7 @@ def choice_people():
     return keyboard
 
 
-def cancel():
+def cancel_admin():
     buttons = [[InlineKeyboardButton(text="Отмена", callback_data="admin")]]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
@@ -277,7 +283,7 @@ def create_form_buttons(id: int):
     ))
     builder.row(InlineKeyboardButton(
         text="Задать вопрос",
-        callback_data="request_chat"
+        callback_data=f"request-chat_{id}"
     ))
     return builder
 

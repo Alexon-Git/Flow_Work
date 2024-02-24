@@ -477,7 +477,7 @@ async def customer_forms_button_callback(callback: types.CallbackQuery,state: FS
         pass
     finally:
         await callback.answer("Заявка отменена.")
-        set_city_stat("record_cancel", callback.message.chat.id)
+        set_city_stat("record_cancel", form["chat_id"])
 
 #===================================Колбек кнопок на заявке в работе===================================
 @router.callback_query(F.data.startswith("finish_"))
@@ -508,3 +508,40 @@ async def all_form_button_callback(callback: types.CallbackQuery,bot: Bot):
         await bot.edit_message_reply_markup(chat_id=form["chat_id"], message_id=form["message_id"],
                                             reply_markup=builder.as_markup())
         await callback.answer("Вы отменили заявку.")
+
+
+#===================================Ответить на вопрос===================================
+class Answer(StatesGroup):
+    SetAnswer = State()
+
+
+@router.callback_query(F.data.startswith("answer"))
+async def request_chat(call: CallbackQuery, state: FSMContext, bot: Bot):
+    msg = await bot.send_message(call.from_user.id, "Напишите свой ответ курьеру",
+                           reply_markup=custom_btn("Отмена", "start"))
+    await state.set_state(Answer.SetAnswer)
+    await state.update_data({"courier_id": call.data.split("_")[-1], "del": msg.message_id})
+
+
+@router.message(Answer.SetAnswer)
+async def request_chat(mess: Message, state: FSMContext, bot: Bot):
+    data = await state.get_data()
+    try:
+        await bot.edit_message_reply_markup(mess.chat.id, data["del"], reply_markup=None)
+    except:
+        pass
+    if not check_test(mess.text):
+        await state.update_data({"text": mess.text})
+        await mess.answer("Проверьте свой ответ перед отправкой:\n\n"
+                          f"{mess.text}", reply_markup=confirmation(canc_data="start"))
+    else:
+        msg = await mess.answer("Сообщение содержит запрещенную информацию! Уберите все ссылки и номера телефонов!")
+        await state.update_data({"del": msg.message_id})
+
+
+@router.callback_query(F.data.startswith("yes"), Answer.SetAnswer)
+async def request_chat(call: CallbackQuery, state: FSMContext, bot: Bot):
+    data_state = await state.get_data()
+    await bot.send_message(data_state["courier_id"], f"Ответ от заказчика:\n\n{data_state['text']}")
+    await call.message.edit_text("Сообщение отправлено!")
+    await state.clear()

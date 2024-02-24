@@ -49,6 +49,6 @@ worksheet_city = sheet.worksheet('City')
 city_info = worksheet_city.get_all_records()
 
 
-async def check_city():
+def check_city():
     global city_info
     city_info = worksheet_city.get_all_records()

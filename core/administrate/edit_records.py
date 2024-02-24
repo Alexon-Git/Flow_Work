@@ -32,7 +32,7 @@ async def choice_id_records(call: CallbackQuery, state: FSMContext):
         await creat_table(call.data.split("_")[-1])
         msg = await call.message.edit_text("Существующие записи:\n"
                                      "https://docs.google.com/spreadsheets/d/1ZdLjtdhlsD3B1wVDQFRfTo3NpvqGyudoitUJLcBuSNo/edit#gid=1109808180\n\n"
-                                     "Введите TG_ID нужного человека для редактирования", reply_markup=kbi.cancel())
+                                     "Введите TG_ID нужного человека для редактирования", reply_markup=kbi.cancel_admin())
         await state.set_state(EditRecord.ChoiceId)
         await state.update_data({"del": msg.message_id, "type": call.data.split("_")[-1]})
     except IndexError:
@@ -45,7 +45,7 @@ async def choice_id_records(call: CallbackQuery, state: FSMContext):
 async def choice_id_records(call: CallbackQuery, state: FSMContext):
     msg = await call.message.edit_text("Существующие записи:\n"
                                  "https://docs.google.com/spreadsheets/d/1ZdLjtdhlsD3B1wVDQFRfTo3NpvqGyudoitUJLcBuSNo/edit#gid=1109808180\n\n"
-                                 "Введите TG_ID нужного человека для редактирования", reply_markup=kbi.cancel())
+                                 "Введите TG_ID нужного человека для редактирования", reply_markup=kbi.cancel_admin())
     await state.update_data({"del": msg.message_id})
     await state.set_state(EditRecord.ChoiceId)
 
@@ -66,7 +66,7 @@ async def view_data_record(mess: Message, state: FSMContext, bot: Bot):
         elif check_cust and data["type"] == "customer":
             data_record = await db.get_customer(int(mess.text))
         else:
-            await mess.answer("Такого пользователя нет в базе данных!", reply_markup=kbi.cancel())
+            await mess.answer("Такого пользователя нет в базе данных!", reply_markup=kbi.cancel_admin())
             return
         text_mess = ("Информация:\n"
                      f"ФИО: {data_record['fio']}\n"
@@ -79,12 +79,12 @@ async def view_data_record(mess: Message, state: FSMContext, bot: Bot):
         await mess.answer(text_mess, reply_markup=kbi.admin_edit_record((check_cust and data["type"] == "customer")))
         await state.update_data({"user_id": int(mess.text)})
     except ValueError:
-        await mess.answer("Данные не являются telegram_id!", reply_markup=kbi.cancel())
+        await mess.answer("Данные не являются telegram_id!", reply_markup=kbi.cancel_admin())
 
 
 @subrouter.callback_query(F.data.split("-")[0] == "edit", EditRecord.ChoiceId)
 async def set_new_data_record(call: CallbackQuery, state: FSMContext):
-    await call.message.edit_text("Введите новые данные!", reply_markup=kbi.cancel())
+    await call.message.edit_text("Введите новые данные!", reply_markup=kbi.cancel_admin())
     await state.update_data({"fild": call.data.split("-")[-1]})
     await state.set_state(EditRecord.SetData)
 

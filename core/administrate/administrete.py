@@ -8,7 +8,7 @@ from aiogram.filters import StateFilter
 
 from core.settings import settings, home, check_city
 from core.keyboards import inline as kbi
-from core.database.database import get_id_admin, get_data_admin, deleted_admin, get_user, get_all_price
+from core.database.database import get_data_admin, deleted_admin, get_user, get_all_price
 from core.message.text import get_text_start_mess, set_text_start_mess, get_amount, set_amount, get_bet, set_bet
 
 router = Router()
@@ -37,7 +37,7 @@ async def check_start_mess(call: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "yes", EditStartMess.CheckOldMess)
 @router.callback_query(F.data == "no", EditStartMess.SetMessage)
 async def set_new_start_mess(call: CallbackQuery, state: FSMContext):
-    msg = await call.message.edit_text(f"Отправьте новое сообщение:", reply_markup=kbi.cancel())
+    msg = await call.message.edit_text(f"Отправьте новое сообщение:", reply_markup=kbi.cancel_admin())
     await state.update_data({"del": msg.message_id})
     await state.set_state(EditStartMess.SetMessage)
 
@@ -83,7 +83,7 @@ async def check_amount(call: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "yes", EditAmount.CheckOldAmount)
 @router.callback_query(F.data == "no", EditAmount.SetAmount)
 async def set_new_amount(call: CallbackQuery, state: FSMContext):
-    msg = await call.message.edit_text(f"Отправьте новую стоимость числом:", reply_markup=kbi.cancel())
+    msg = await call.message.edit_text(f"Отправьте новую стоимость числом:", reply_markup=kbi.cancel_admin())
     await state.update_data({"del": msg.message_id})
     await state.set_state(EditAmount.SetAmount)
 
@@ -101,7 +101,7 @@ async def check_new_mess(mess: Message, state: FSMContext, bot: Bot):
         await mess.answer(f"Новая стоимость: {new_amount}\n\nСохраняем?",
                           reply_markup=kbi.confirmation())
     except:
-        await mess.answer("Данные не являются числом или содержат лишние символы!", reply_markup=kbi.cancel())
+        await mess.answer("Данные не являются числом или содержат лишние символы!", reply_markup=kbi.cancel_admin())
 
 
 @router.callback_query(F.data == "yes", EditAmount.SetAmount)
@@ -158,7 +158,10 @@ class EditBet(StatesGroup):
 @router.callback_query(F.data == "bet")
 async def check_bet(call: CallbackQuery, state: FSMContext):
     list_price = await get_all_price()
-    average = round(sum(list_price) / len(list_price))
+    try:
+        average = round(sum(list_price) / len(list_price))
+    except ZeroDivisionError:
+        average = 0
     await call.message.edit_text(f"Минимальная установленная цена: {get_bet()}\n"
                                  f"Средняя цена на данный момент: {average}",
                                  reply_markup=kbi.edit_bet())
@@ -167,7 +170,7 @@ async def check_bet(call: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "bet_edit")
 @router.callback_query(F.data == "no", EditAmount.SetAmount)
 async def set_new_bet(call: CallbackQuery, state: FSMContext):
-    msg = await call.message.edit_text(f"Отправьте новую стоимость числом:", reply_markup=kbi.cancel())
+    msg = await call.message.edit_text(f"Отправьте новую стоимость числом:", reply_markup=kbi.cancel_admin())
     await state.update_data({"del": msg.message_id})
     await state.set_state(EditAmount.SetAmount)
 
@@ -185,7 +188,7 @@ async def check_new_mess(mess: Message, state: FSMContext, bot: Bot):
         await mess.answer(f"Новая стоимость: {new_amount}\n\nСохраняем?",
                           reply_markup=kbi.confirmation())
     except ValueError:
-        await mess.answer("Данные не являются числом или содержат лишние символы!", reply_markup=kbi.cancel())
+        await mess.answer("Данные не являются числом или содержат лишние символы!", reply_markup=kbi.cancel_admin())
 
 
 @router.callback_query(F.data == "yes", EditAmount.SetAmount)
@@ -198,6 +201,6 @@ async def set_new_start_mess(call: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "update_city")
 async def update_city(call: CallbackQuery):
-    await check_city()
+    check_city()
     await call.answer("Список городов обновлен!")
 
