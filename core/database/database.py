@@ -7,10 +7,10 @@ from core.settings import settings
 
 async def connect() -> asyncpg.Connection:
     return await asyncpg.connect(host="localhost",
-                                 port="5432",
-                                 user=settings.db_user,
-                                 password=settings.db_password,
-                                 database="orders_aggregator")
+                                 port="5433",
+                                 user="postgres",
+                                 password="12345",
+                                 database="order_aggregator")
 
 
 ########################_SET_DATA_##################################################################
@@ -30,12 +30,12 @@ async def set_courier(data: dict):
     conn = await connect()
     try:
         query = ('INSERT INTO public.courier (username, user_id, status_payment, date_payment_expiration,'
-                 'date_registration, fio, phone, email, city,notification_one,notification_zero) '
-                 'VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)')
+                 'date_registration, fio, phone, email, city,notification_one,notification_zero,verification) '
+                 'VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,$12)')
         await conn.execute(query,
                            data["username"], data["user_id"], data["status_payment"],
                            data["date_payment_expiration"], data["date_registration"], data["fio"],
-                           data["phone"], data["email"], data["city"],data["notification_one"],data["notification_zero"])
+                           data["phone"], data["email"], data["city"],data["notification_one"],data["notification_zero"],data["verification"])
     finally:
         await conn.close()
     return
@@ -94,7 +94,7 @@ async def change_notification_one(user_id: int,mode:bool) -> dict:
 
 async def change_notification_zero(user_id: int,mode:bool) -> dict:
     conn = await connect()
-    query = 'UPDATE public.courier SET notification_zero = $1 AND status_payment = false WHERE public.courier.user_id = $2'
+    query = 'UPDATE public.courier SET notification_zero = $1, status_payment = false WHERE public.courier.user_id = $2'
     try:
         await conn.execute(query,mode,user_id)
     finally:
@@ -102,11 +102,29 @@ async def change_notification_zero(user_id: int,mode:bool) -> dict:
     return
 
 
+async def set_request_courier(id:int,courier_id:int,message_id:int)->None:
+    conn = await connect()
+    query = 'UPDATE public.request SET courier_id = $1, message_courier_id = $2 WHERE public.request.id = $3'
+    try:
+        await conn.execute(query, courier_id,message_id, id)
+    finally:
+        await conn.close()
+    return
+
 async def change_status_work(id:int,status:str):
     conn = await connect()
     query = 'UPDATE public.request SET status_work = $1 WHERE public.request.id = $2'
     try:
         await conn.execute(query,status,id)
+    finally:
+        await conn.close()
+    return
+
+async def verification_courier(user_id:int):
+    conn = await connect()
+    query = 'UPDATE public.courier SET verification = true WHERE public.courier.user_id = $1'
+    try:
+        await conn.execute(query, id)
     finally:
         await conn.close()
     return
@@ -179,7 +197,7 @@ async def get_request(id: int) -> dict:
                   "adress_b": rows[0]["adress_b"],
                   "code": rows[0]["code"],"price":rows[0]["price"],
                   "store_name":rows[0]["store_name"],"message_id":rows[0]["message_id"],
-                  "chat_id":rows[0]["chat_id"]}
+                  "chat_id":rows[0]["chat_id"],"courier_id":rows[0]["courier_id"],"message_courier_id":rows[0]["message_courier_id"]}
     except IndexError:
         return {}
     return result
@@ -202,7 +220,7 @@ async def get_customer_sent_request(user_id: int) -> dict:
                     "adress_b": row["adress_b"],
                     "code": row["code"],"price":row["price"],
                     "store_name":row["store_name"],"message_id":row["message_id"],
-                    "chat_id":row["chat_id"]})
+                    "chat_id":row["chat_id"],"courier_id":row["courier_id"],"message_courier_id":row["message_courier_id"]})
     except IndexError:
         return {}
     return result
