@@ -15,11 +15,27 @@ async def creat_table(type_people: str):
     worksheet.clear()
     if type_people == "customer":
         records = await get_all_customer()
+        cour = False
     else:
         records = await get_all_courier()
-    worksheet.append_row([j for j in records[0].keys()])
+        cour = True
+    heading = [j for j in records[0].keys()]
+    if cour:
+        heading.pop(-1)
+        heading.pop(-1)
+        heading.append("score")
+    worksheet.append_row(heading)
     for i in records:
-        worksheet.append_row([j for j in i.values()])
+        tmp_row = [j for j in i.values()]
+        if cour:
+            try:
+                tmp_score = tmp_row[-1]/tmp_row[-2]
+            except ZeroDivisionError:
+                tmp_score = 0
+            tmp_row.pop(-1)
+            tmp_row.pop(-1)
+            tmp_row.append(tmp_score)
+        worksheet.append_row(tmp_row)
 
 
 def upload_statistics(city_name: str, city_id: int):

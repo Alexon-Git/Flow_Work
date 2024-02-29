@@ -626,7 +626,7 @@ async def finishrequest(callback:CallbackQuery,state:FSMContext,bot:Bot):
     await bot.delete_message(chat_id=data["request_info"]["chat_id"],message_id=data["request_info"]["message_id"])
     await bot.delete_message(chat_id=data["request_info"]["user_id_customer"],message_id=data["customer_message_id"])
     await bot.send_message(chat_id=data["request_info"]["user_id_customer"],text=f"Курьер завершил доставку по заявке с кодом {data['request_info']['code']}.\nНе забудьте об оплате, а также по желанию оцените курьера с помощью кнопок ниже.",reply_markup=add_score_button(data['request_info']['courier_id'],data['request_info']['id']))
-    await callback.message.answer(f"Вы завершили доставку по заявке с кодом {data["request_info"]['code']}.\nОжидайте поступления перевода.")
+    await callback.message.answer(f"Вы завершили доставку по заявке с кодом {data['request_info']['code']}.\nОжидайте поступления перевода.")
     await callback.message.delete()
 
     await callback.answer()
@@ -719,7 +719,7 @@ async def request_chat(callback: CallbackQuery,callback_data:Chat, state:FSMCont
 @router.message(ChatState.message)
 async def send_message_chat(message: Message,state:FSMContext,bot:Bot):
     data = await state.get_data()
-    msg = f"Сообщение по заявке с кодом {data["info"][1]}"
+    msg = f"Сообщение по заявке с кодом {data['info'][1]}"
     msg+="\n➖➖➖➖➖➖➖➖➖➖➖➖➖\n"
     msg+=message.text
 

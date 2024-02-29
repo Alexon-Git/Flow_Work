@@ -7,10 +7,10 @@ from core.settings import settings
 
 async def connect() -> asyncpg.Connection:
     return await asyncpg.connect(host="localhost",
-                                 port="5433",
-                                 user="postgres",
-                                 password="12345",
-                                 database="order_aggregator")
+                                 port="5432",
+                                 user=settings.db_user,
+                                 password=settings.db_password,
+                                 database="orders_aggregator")
 
 
 ########################_SET_DATA_##################################################################
