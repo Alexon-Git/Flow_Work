@@ -1,11 +1,31 @@
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-
+from aiogram.filters.callback_data import CallbackData
 
 from core.settings import settings
 from core.database.database import get_id_admin
 
+class VerificationKeyboard(CallbackData, prefix="verification"):
+    mode:bool
+    id:int
+
+class StartFinishCourier(CallbackData, prefix="requestwork"):
+    action:str
+    request_id:int
+    customer_message_id:int
+
+class AddScore(CallbackData, prefix="addscore"):
+    score:int
+    courier_id:int
+    request_id:int
+
+class Chat(CallbackData, prefix="chat"):
+    user_id:int
+    code:str
+class AnswerChat(CallbackData, prefix="readchat"):
+    user_id: int
+    request_code: str
 
 async def create_start_buttons(user_id: int) -> InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
@@ -72,6 +92,13 @@ def create_customer_buttons(registration: bool) -> InlineKeyboardBuilder:
         ) 
     return builder
 
+def answer_chat_button(user_id: int, code: str) -> InlineKeyboardMarkup:
+    buttons = [
+        [InlineKeyboardButton(text="Прочитано", callback_data=AnswerChat(user_id = user_id, request_code = code).pack()),
+         InlineKeyboardButton(text="Ответить",callback_data=Chat(user_id=user_id,code=code).pack())]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
 def cancel_form_button()->InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
     builder.row(InlineKeyboardButton(text="Отмена",callback_data="cancel_form"))
@@ -83,7 +110,48 @@ def create_none_store_button()->InlineKeyboardBuilder:
     builder.row(InlineKeyboardButton(text="Отмена", callback_data="cancel_form"))
     return builder
 
+def add_score_button(courier_id:int,request_id:int)->InlineKeyboardMarkup:
+    buttons = [
+        [InlineKeyboardButton(text="1", callback_data=AddScore(score = 1,courier_id =courier_id,request_id = request_id).pack()),
+         InlineKeyboardButton(text="2", callback_data=AddScore(score = 2,courier_id =courier_id,request_id = request_id).pack()),
+         InlineKeyboardButton(text="3", callback_data=AddScore(score = 3,courier_id =courier_id,request_id = request_id).pack()),
+         InlineKeyboardButton(text="4", callback_data=AddScore(score = 4,courier_id =courier_id,request_id = request_id).pack()),
+         InlineKeyboardButton(text="5", callback_data=AddScore(score = 5,courier_id =courier_id,request_id = request_id).pack())
+         ],
+        [InlineKeyboardButton(text="Завершить", callback_data=AddScore(score = 0,courier_id =courier_id,request_id = request_id).pack())]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
+def translatelocation_buttons(user_id:int,code:str)->InlineKeyboardMarkup:
+    buttons = [
+        [InlineKeyboardButton(text="Доставил", callback_data="finishrequest")],[
+         InlineKeyboardButton(text="Начать чат", callback_data=Chat(user_id=user_id,code=code).pack())]
+    ]
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return keyboard
+
+def start_chat_button(user_id:int,code:str)->InlineKeyboardMarkup:
+    button = [[InlineKeyboardButton(text="Начать чат", callback_data=Chat(user_id=user_id,code=code).pack())]]
+    return InlineKeyboardMarkup(inline_keyboard=button)
+
+def verification_courier_button(id:int)->InlineKeyboardMarkup:
+    buttons=[
+        [
+        InlineKeyboardButton(text="Верифицировать",callback_data=VerificationKeyboard(mode = True,id = id).pack()),
+        InlineKeyboardButton(text="Отказать",callback_data=VerificationKeyboard(mode = False,id = id).pack())]
+    ]
+    keyboard=InlineKeyboardMarkup(inline_keyboard=buttons)
+    return keyboard
+
+
+def link_city_buttons(link:str)->InlineKeyboardBuilder:
+    button = [[
+        InlineKeyboardButton(text="Назад в меню", callback_data="start")
+    ],[
+        InlineKeyboardButton(text="Вступить в группу", url=link)
+    ]]
+    keyboard=InlineKeyboardMarkup(inline_keyboard=button)
+    return keyboard
 def create_newform_button(link:str)->InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
     builder.row(InlineKeyboardButton(
@@ -193,13 +261,12 @@ def status_work()->InlineKeyboardBuilder:
     return builder
 
 
-def form_cancel(id:int)->InlineKeyboardBuilder:
-    builder = InlineKeyboardBuilder()
-    builder.row(InlineKeyboardButton(
-        text="Отменить заявку",
-        callback_data=f"formcancel_{id}"
-    ))
-    return builder
+def form_cancel_chat(id:int,user_id:int,code:str)->InlineKeyboardMarkup:
+    buttons =  [
+        [InlineKeyboardButton(text="Начать чат",callback_data=Chat(user_id=user_id,code=code).pack())],
+        [InlineKeyboardButton(text="Отменить заявку",callback_data=f"formcancel_{id}")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
 def customer_finish(id:int):
@@ -266,13 +333,23 @@ def admin_edit_record(check_cust: bool):
     return keyboard
 
 
-def courier_finish(id: int):
-    builder = InlineKeyboardBuilder()
-    builder.row(InlineKeyboardButton(
-        text="Отмена",
-        callback_data=f"finish_courier_{id}"
-    ))
-    return builder
+def courier_start_finish(id: int,message_id:int,user_id:int,code:str):
+    buttons = [
+        [InlineKeyboardButton(text="Принял товар",callback_data=StartFinishCourier(action="start",request_id=id, customer_message_id = message_id).pack())],
+        [InlineKeyboardButton(text="Отмена",callback_data=StartFinishCourier(action="finish",request_id=id, customer_message_id = message_id).pack())],
+        [InlineKeyboardButton(text="Начать чат",callback_data=Chat(user_id=user_id,code=code).pack())]
+    ]
+    # builder = InlineKeyboardBuilder()
+    # builder.(InlineKeyboardButton(
+    #     text="Принял товар",
+    #     callback_data=f"sadstart_courier_{id}"
+    # ))
+    # builder.row(InlineKeyboardButton(
+    #     text="Отмена",
+    #     callback_data=f"finish_courier_{id}"
+    # ))
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return keyboard
 
 
 def create_form_buttons(id: int):
@@ -286,6 +363,7 @@ def create_form_buttons(id: int):
         callback_data=f"request-chat_{id}"
     ))
     return builder
+
 
 
 def edit_bet():

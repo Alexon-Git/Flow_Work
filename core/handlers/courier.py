@@ -27,8 +27,9 @@ class CourierState(StatesGroup):
     email = State()
     city = State()
     phone = State()
+    photo = State()
     n = ()
-
+#msg = await message.answer(f"Регистрация успешно завершена.\n➖➖➖➖➖➖➖➖➖➖➖➖➖\nПрежде чем вы получите 14д пробного использования администраторы должны проверить ваш профиль.В стартовом меню в разделе 'Курьер' вы можете продлить подписку.\n➖➖➖➖➖➖➖➖➖➖➖➖➖\nСсылка на вступление в группу города: {link.invite_link}",reply_markup=ReplyKeyboardRemove())
 
 #===================================Меню Курьера===================================
 @router.callback_query(F.data=="courier")
@@ -36,12 +37,15 @@ async def courier_callback(callback: types.CallbackQuery,bot:Bot):
     if await database.check_courier(user_id = callback.from_user.id):
         expire_date = datetime.datetime.now() + datetime.timedelta(days=1)
         courier = await database.get_courier(callback.from_user.id)
+        if courier["verification"]==False:
+            await callback.answer("Меню курьеров будет недоступно до окончания верифицакии. Просим прощения за ожидание.")
+            return
         chat_id = 0
+        link = ""
         for i in city_info:
             if i["Город"]==courier["city"]:
-                chat_id = i["chat id"]
-        link = await bot.create_chat_invite_link(chat_id=chat_id, expire_date= int( expire_date.timestamp()),member_limit= 1)
-        builder = create_courier_buttons(True,link.invite_link) 
+                link = i["ссылка"]
+        builder = create_courier_buttons(True,link)
         
         days = datetime.datetime.strptime(courier["date_payment_expiration"], "%Y-%m-%d").date() - date.today()
         message = f"Меню для курьеров.\nУ вас осталось {days.days}д. оплаченной подписки."
@@ -168,40 +172,65 @@ async def customer_button_callback(callback: types.CallbackQuery,state: FSMConte
         await callback.message.answer("Отправьте ваш номер телефона",reply_markup=builder.as_markup(resize_keyboard=True))
         await callback.message.edit_reply_markup(reply_markup=None)
         await callback.answer()
-#===================================Город===================================
-# @router.message(CourierState.city)
-# async def courier_city(message: Message,state: FSMContext):
-#     await state.update_data(city = message.text)
-#     await state.set_state(CourierState.phone)
-#     builder = create_contact_button()
-#     await message.answer("Отправьте ваш номер телефона",reply_markup=builder.as_markup(resize_keyboard=True))
 
 
 
-#===================================Номер и завершение регистрации===================================
+#===================================Номер===================================
 @router.message(CourierState.phone,(F.contact!=None and F.contact.user_id == F.from_user.id))
 async def courier_contact(message:Message,state: FSMContext,bot:Bot):
     await state.update_data(phone=message.contact.phone_number)
+    await message.answer("Последний этап: отправьте фотографию документа, подтверждающего личность. Документ должен быть читабельным для вашей успешной верификации",reply_markup=ReplyKeyboardRemove())
+    await state.set_state(CourierState.photo)
+
+#===================================Фотография документа и завершение регистрации===================================
+@router.message(CourierState.photo, F.photo !=None)
+async def courier_photo(message: Message,state:FSMContext,bot:Bot):
+    await state.update_data(photo = message.photo[1].file_id)
+
     data = await state.get_data()
     await state.clear()
-    expire_date = datetime.datetime.now() + datetime.timedelta(days=1)
-    chat_id = city_info[data["city"]]["chat id"]
-    link = await bot.create_chat_invite_link(chat_id=chat_id, expire_date= int( expire_date.timestamp()),member_limit= 1)
-    msg = await message.answer(f"Регистрация успешно завершена. Вы получили 14д пробного использования.\n➖➖➖➖➖➖➖➖➖➖➖➖➖\nВ стартовом меню в разделе 'Курьер' вы можете продлить подписку.\n➖➖➖➖➖➖➖➖➖➖➖➖➖Ссылка на вступление в группу города: {link.invite_link}",reply_markup=ReplyKeyboardRemove())
+    link = city_info[data["city"]]["ссылка"]
+    await message.answer(f"Регистрация успешно завершена.\n➖➖➖➖➖➖➖➖➖➖➖➖➖\nПрежде чем вы получите 14д пробного использования и сможете отвечать на заявки, администраторы должны проверить ваш профиль.",reply_markup=link_city_buttons(link))
     new_courier = {
-        "username" : message.from_user.first_name,
-        "user_id":message.from_user.id,
-        "status_payment":True,
-        "date_payment_expiration":str(date.today()+datetime.timedelta(days=14)),
-        "date_registration":str(date.today()),
-        "fio":data["fio"],
-        "city":city_info[data["city"]]["Город"],
-        "phone":data["phone"],
-        "email":data["email"],
-        "notification_one":False,
-        "notification_zero":False
+        "username": message.from_user.first_name,
+        "user_id": message.from_user.id,
+        "status_payment": True,
+        "date_payment_expiration": "",
+        "date_registration": str(date.today()),
+        "fio": data["fio"],
+        "city": city_info[data["city"]]["Город"],
+        "phone": data["phone"],
+        "email": data["email"],
+        "notification_one": None,
+        "notification_zero": None,
+        "verification": False,
+        "score":0,
+        "n_score":0
     }
     await database.set_courier(new_courier)
+    msg = "ВЕРИФИКАЦИЯ КУРЬЕРА"
+    msg += "\n➖➖➖➖➖➖➖➖➖➖➖➖➖\n"
+    msg += f"Пользователь: @{message.from_user.username}\n"
+    msg += f"Ссылка: [{message.from_user.first_name}](tg://user?id={message.from_user.id})\n"
+
+    await bot.send_photo(chat_id=settings.bots.chat_id, photo=data["photo"], caption=msg,parse_mode="Markdown",reply_markup=verification_courier_button(message.from_user.id))
+
+
+
+#===================================Верификация курьера===================================
+@router.callback_query(VerificationKeyboard.filter())
+async def callbacks_num_change_fab(callback: types.CallbackQuery,callback_data: VerificationKeyboard,bot:Bot):
+    if callback_data.mode:
+        data =str(date.today()+datetime.timedelta(days=14))
+        await database.verification_courier(callback_data.id,data)
+        text= "Вы успешно прошли верификацию. Теперь вы имеете возможность откликаться на заявке в группе вашего города.\nБлагодарим за ожидание."
+        await bot.send_message(chat_id=callback_data.id,text=text)
+    else:
+        text = "Вы не прошли верификацию. Проверьте правильность введенных данных и корректность отправленной фотографии."
+        await bot.send_message(chat_id=callback_data.id,text=text)
+    await callback.message.delete()
+    await callback.answer()
+
 
 
 #===================================Задать вопрос===================================
