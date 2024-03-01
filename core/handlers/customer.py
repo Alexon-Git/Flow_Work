@@ -114,8 +114,10 @@ async def customer_button_callback(callback: types.CallbackQuery, state: FSMCont
             if form["status_work"]=="work":
                 msg = "<b>Заявка в работе</b>\n"+"-"*30+"\n"
                 msg+=f"Магазин: {form['store_name']}\n"
-                msg+=f"Адрес А: {form['adress_a']}\n"
-                msg+=f"Адрес Б: {form['adress_b']}\n"
+                adress_a = ", ".join(geolocator.reverse(form['adress_a']).address.split(", ")[:4])
+                adress_b = ", ".join(geolocator.reverse(form['adress_b']).address.split(", ")[:4])
+                msg+=f"Адрес А: {adress_a}\n"
+                msg+=f"Адрес Б: {adress_b}\n"
                 msg+=f"Стоимость: {form['price']}\n"
                 msg+=f"Код: {form['code']}\n"
                 builder = customer_finish(form["id"])
@@ -123,8 +125,10 @@ async def customer_button_callback(callback: types.CallbackQuery, state: FSMCont
             elif form["status_work"]=="sent":
                 msg = "<b>Заявка отправлена</b>\n"+"-"*30+"\n"
                 msg+=f"Магазин: {form['store_name']}\n"
-                msg+=f"Адрес А: {form['adress_a']}\n"
-                msg+=f"Адрес Б: {form['adress_b']}\n"
+                adress_a = ", ".join(geolocator.reverse(form['adress_a']).address.split(", ")[:4])
+                adress_b = ", ".join(geolocator.reverse(form['adress_b']).address.split(", ")[:4])
+                msg+=f"Адрес А: {adress_a}\n"
+                msg+=f"Адрес Б: {adress_b}\n"
                 msg+=f"Стоимость: {form['price']}\n"
                 msg+=f"Код: {form['code']}\n"
                 builder = form_cancel_chat(form["id"], callback.from_user.id, form["code"])
