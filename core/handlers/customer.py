@@ -347,7 +347,13 @@ async def form_adress_b(message: Message,state: FSMContext,bot:Bot):
     data = await state.get_data()
     await bot.edit_message_reply_markup(chat_id=message.chat.id, message_id=data["last_msg"], reply_markup=None)
     builder = cancel_form_button()
-    msg = await message.answer(f"Укажите стоимость доставки (минимальное значение {get_bet()})",
+    list_price = await database.get_all_price()
+    try:
+        average = round(sum(list_price) / len(list_price))
+    except ZeroDivisionError:
+        average = 0
+    msg = await message.answer(f"Укажите стоимость доставки (минимальное значение {get_bet()}, "
+                               f"среднее значение на данный момент: {average})",
                                reply_markup=builder.as_markup())
     await state.update_data(last_msg=msg.message_id)
     await state.set_state(NewForm.cash)
