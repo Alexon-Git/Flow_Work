@@ -493,9 +493,9 @@ async def customer_forms_button_callback(callback: types.CallbackQuery,state: FS
         msg+="Информация о курьере:\n"
         msg+=f"ФИО: {courier['fio']}\n"
         msg+=f"Номер телефона: {courier['phone']}\n"
-        msg += f"Количество оценок: {courier['n_score']}\n"
-        if courier['n_score']>0:
-            msg += f"Средний рейтинг: {courier['score']/round(courier['n_score'],2)}\n"
+        msg += f"Количество оценок: {courier['orders']}\n"
+        if courier['orders']>0:
+            msg += f"Средний рейтинг: {courier['point']/round(courier['orders'],2)}\n"
         else:
             msg += f"Средний рейтинг: 0\n"
         msg+="➖➖➖➖➖➖➖➖➖➖➖➖➖\n"

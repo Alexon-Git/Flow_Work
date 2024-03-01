@@ -30,13 +30,12 @@ async def set_courier(data: dict):
     conn = await connect()
     try:
         query = ('INSERT INTO public.courier (username, user_id, status_payment, date_payment_expiration,'
-                 'date_registration, fio, phone, email, city,notification_one,notification_zero,verification,score,n_score) '
-                 'VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,$12,$13,$14)')
+                 'date_registration, fio, phone, email, city,notification_one,notification_zero,verification) '
+                 'VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,$12)')
         await conn.execute(query,
                            data["username"], data["user_id"], data["status_payment"],
                            data["date_payment_expiration"], data["date_registration"], data["fio"],
-                           data["phone"], data["email"], data["city"],data["notification_one"],data["notification_zero"],data["verification"],
-                           data["score"],data["n_score"])
+                           data["phone"], data["email"], data["city"],data["notification_one"],data["notification_zero"],data["verification"]
     finally:
         await conn.close()
     return
@@ -130,11 +129,11 @@ async def verification_courier(user_id:int,data:str):
         await conn.close()
     return
 
-async def add_score_courier(courier_id:int,score:int):
+async def add_score_courier(courier_id:int,point:int):
     conn = await connect()
-    query = 'UPDATE public.courier SET score = score+$1, n_score = n_score+1 WHERE public.courier.user_id = $2'
+    query = 'UPDATE public.courier SET point = point+$1, orders = orders+1 WHERE public.courier.user_id = $2'
     try:
-        await conn.execute(query,score, courier_id)
+        await conn.execute(query,point, courier_id)
     finally:
         await conn.close()
     return

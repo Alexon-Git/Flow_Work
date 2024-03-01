@@ -203,9 +203,7 @@ async def courier_photo(message: Message,state:FSMContext,bot:Bot):
         "email": data["email"],
         "notification_one": None,
         "notification_zero": None,
-        "verification": False,
-        "score":0,
-        "n_score":0
+        "verification": False
     }
     await database.set_courier(new_courier)
     msg = "ВЕРИФИКАЦИЯ КУРЬЕРА"
