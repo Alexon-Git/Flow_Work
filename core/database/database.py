@@ -35,7 +35,7 @@ async def set_courier(data: dict):
         await conn.execute(query,
                            data["username"], data["user_id"], data["status_payment"],
                            data["date_payment_expiration"], data["date_registration"], data["fio"],
-                           data["phone"], data["email"], data["city"],data["notification_one"],data["notification_zero"],data["verification"]
+                           data["phone"], data["email"], data["city"],data["notification_one"],data["notification_zero"],data["verification"])
     finally:
         await conn.close()
     return

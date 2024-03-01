@@ -9,7 +9,11 @@ from core.message.text import get_text_start_mess
 from core.administrate.administrete import check_code_admin
 
 router = Router()
- 
+
+
+class SupportQuestion(StatesGroup):
+    SetQuestion = State()
+
 
 @router.message(CommandStart(), StateFilter(None))
 async def start_handler(message: Message, state: FSMContext):
@@ -28,6 +32,7 @@ async def start_handler(message: Message, state: FSMContext):
     return
 
 
+@router.callback_query(SupportQuestion.SetQuestion, F.data == "no")
 @router.callback_query(F.data == "start", StateFilter(None))
 async def start_call_handler(call: CallbackQuery, state: FSMContext):
     await state.clear()
@@ -37,12 +42,8 @@ async def start_call_handler(call: CallbackQuery, state: FSMContext):
 
 
 #===================================Обращение в поддержку===================================
-class SupportQuestion(StatesGroup):
-    SetQuestion = State()
-
-
 @router.callback_query(F.data == "support")
-async def support_chat(call: CallbackQuery, state: FSMContext, bot: Bot):
+async def support_chat(call: CallbackQuery, state: FSMContext):
     msg = await call.message.edit_text("Напишите свой вопрос или подробно опишите возникшую проблему:",
                                  reply_markup=custom_btn("Отмена", "start"))
     await state.set_state(SupportQuestion.SetQuestion)
