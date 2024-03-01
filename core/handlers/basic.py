@@ -32,7 +32,7 @@ async def start_handler(message: Message, state: FSMContext):
     return
 
 
-@router.callback_query(SupportQuestion.SetQuestion, F.data == "no")
+@router.callback_query(SupportQuestion.SetQuestion, F.data == "start")
 @router.callback_query(F.data == "start", StateFilter(None))
 async def start_call_handler(call: CallbackQuery, state: FSMContext):
     await state.clear()
@@ -43,6 +43,7 @@ async def start_call_handler(call: CallbackQuery, state: FSMContext):
 
 #===================================Обращение в поддержку===================================
 @router.callback_query(F.data == "support")
+@router.callback_query(SupportQuestion.SetQuestion, F.data == "no")
 async def support_chat(call: CallbackQuery, state: FSMContext):
     msg = await call.message.edit_text("Напишите свой вопрос или подробно опишите возникшую проблему:",
                                  reply_markup=custom_btn("Отмена", "start"))
