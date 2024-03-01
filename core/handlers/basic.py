@@ -1,7 +1,7 @@
 from aiogram import Router, F, Bot
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery
-from aiogram.filters import CommandStart, StateFilter
+from aiogram.filters import CommandStart, StateFilter, Command
 
 from core.keyboards.inline import *
 from core.database import database
@@ -71,3 +71,9 @@ async def support_chat(call: CallbackQuery, state: FSMContext, bot: Bot):
                            f"Обращение:\n\n{data_state['text']}", parse_mode="Markdown")
     await call.message.edit_text("Сообщение отправлено!")
     await state.clear()
+
+
+@router.message(Command("info"), StateFilter(None))
+async def information_message(message: Message):
+    await message.answer("Для просмотра инструкции нажмите на кнопку👇", reply_markup=information())
+    return

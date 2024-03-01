@@ -1,6 +1,6 @@
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from aiogram.filters.callback_data import CallbackData
 
 from core.settings import settings
@@ -411,6 +411,13 @@ def create_choose_city_buttons_stat(n: int, city: list):
 
 def custom_btn(text: str, cldata: str):
     buttons = [[InlineKeyboardButton(text=text, callback_data=cldata)]]
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return keyboard
+
+
+def information():
+    buttons = [[InlineKeyboardButton(text="Посмотреть инструкцию", web_app=WebAppInfo(
+        url="https://nil-it.notion.site/Flowwork-e71f09ba455f4fa8a5df000e92265374?pvs=4"))]]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
 
