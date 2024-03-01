@@ -38,7 +38,7 @@ async def courier_callback(callback: types.CallbackQuery,bot:Bot):
         expire_date = datetime.datetime.now() + datetime.timedelta(days=1)
         courier = await database.get_courier(callback.from_user.id)
         if courier["verification"]==False:
-            await callback.answer("Меню курьеров будет недоступно до окончания верифицакии. Просим прощения за ожидание.")
+            await callback.answer("Меню курьеров будет недоступно до окончания верификации. Просим прощения за ожидание.")
             return
         chat_id = 0
         link = ""

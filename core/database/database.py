@@ -230,7 +230,7 @@ async def get_customer_sent_request(user_id: int) -> dict:
                     "adress_b": row["adress_b"],
                     "code": row["code"],"price":row["price"],
                     "store_name":row["store_name"],"message_id":row["message_id"],
-                    "chat_id":row["chat_id"],"courier_id":row["courier_id"],"message_courier_id":row["message_courier_id"]})
+                    "chat_id":row["chat_id"], "courier_id":row["courier_id"], "message_courier_id":row["message_courier_id"]})
     except IndexError:
         return {}
     return result
