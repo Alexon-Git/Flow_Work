@@ -76,7 +76,7 @@ class EditAmount(StatesGroup):
 @router.callback_query(F.data == "edit_amount")
 async def check_amount(call: CallbackQuery, state: FSMContext):
     await call.message.edit_text(f"Стоимость подписки на данный момент: {get_amount()/100}\n"
-                                 "Желаете изменить её?", reply_markup=kbi.confirmation())
+                                 "Желаете изменить её?", reply_markup=kbi.confirmation(cd_n="admin"))
     await state.set_state(EditAmount.CheckOldAmount)
 
 

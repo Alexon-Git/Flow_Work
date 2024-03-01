@@ -200,11 +200,13 @@ def admin_menu(user_id: int) -> InlineKeyboardMarkup:
     return keyboard
 
 
-def confirmation(txt_y: str = "Да", txt_n: str = "Нет", cd_y: str = "yes", canc_data: str = "admin"):
+def confirmation(txt_y: str = "Да", txt_n: str = "Нет",
+                 cd_y: str = "yes", cd_n: str = "no",
+                 canc_data: str = "admin"):
     buttons = [
         [
             InlineKeyboardButton(text=txt_y, callback_data=cd_y),
-            InlineKeyboardButton(text=txt_n, callback_data="no")
+            InlineKeyboardButton(text=txt_n, callback_data=cd_n)
         ],
         [InlineKeyboardButton(text="Отмена", callback_data=canc_data)]
     ]

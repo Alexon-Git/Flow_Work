@@ -107,7 +107,8 @@ async def customer_button_callback(callback: types.CallbackQuery, state: FSMCont
         await callback.message.edit_text("Выберите город из которого бутет произведена доставка. Если вашего города нет, то выбирайте ближайший.",reply_markup = builder.as_markup())
         await callback.answer()
     elif action=="forms":
-        # await callback.message.delete()
+        await callback.message.edit_text("Открытые заявки на данный момент времени: ",
+                                         reply_markup=custom_btn("Назад", "customer"))
         forms = await database.get_customer_sent_request(callback.from_user.id)
         for form in forms:
             if form["status_work"]=="work":
@@ -126,8 +127,8 @@ async def customer_button_callback(callback: types.CallbackQuery, state: FSMCont
                 msg+=f"Адрес Б: {form['adress_b']}\n"
                 msg+=f"Стоимость: {form['price']}\n"
                 msg+=f"Код: {form['code']}\n"
-                builder = form_cancel_chat(form["id"],form["code"])
-                await callback.message.answer(text = msg,reply_markup=builder.as_markup())
+                builder = form_cancel_chat(form["id"], callback.from_user.id, form["code"])
+                await callback.message.answer(text=msg,reply_markup=builder.as_markup())
         await callback.answer()
 
 
