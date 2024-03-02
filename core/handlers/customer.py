@@ -424,7 +424,7 @@ async def customer_form_button_callback(callback: types.CallbackQuery,state: FSM
         adress_a = ", ".join(geolocator.reverse(data['adress_a']).address.split(", ")[:4])
         adress_b = ", ".join(geolocator.reverse(data['adress_b']).address.split(", ")[:4])
         msg += f"Адрес А:  <code>{adress_a}</code>\n"
-        msg += f"Адрес А:  <code>{adress_b}</code>\n"
+        msg += f"Адрес Б:  <code>{adress_b}</code>\n"
         msg+=f"Стоимость: {data['cash']}\n"
         msg = await bot.send_message(chat_id = chat_id, text = msg)
         newreq = {
