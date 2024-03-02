@@ -64,11 +64,15 @@ async def courier_callback(callback: types.CallbackQuery,bot:Bot):
 async def courier_button_callback(callback: types.CallbackQuery,state: FSMContext,bot: Bot):
     action = callback.data.split("_")[1]
     if action == "registration":
+        await callback.message.edit_reply_markup(reply_markup=None)
         await state.set_state(CourierState.fio)
-        await callback.message.answer("Введите ваше ФИО")
+        await callback.message.answer("Введите ваше ФИО (Формат: 3 слова 'Ф И О')")
         await callback.answer()
     elif action == "couriergetactiverequest":
         form = await database.get_courier_active_request(callback.from_user.id)
+        if form is None:
+            await callback.answer("У вас нет активных заявок.")
+            return
         msg = "<b>Активная заявка</b>"
         msg += "\n➖➖➖➖➖➖➖➖➖➖➖➖➖\n"
         msg += f"Магазин: {form['store_name']}\n"

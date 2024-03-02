@@ -91,7 +91,7 @@ async def customer_button_callback(callback: types.CallbackQuery, state: FSMCont
     await callback.message.edit_reply_markup(reply_markup=None)
     if action == "registration":
         await state.set_state(CustomerRegistration.fio)
-        await callback.message.edit_text("Введите ваше ФИО",reply_markup=None)
+        await callback.message.edit_text("Введите ваше ФИО (Формат: 3 слова 'Ф И О')",reply_markup=None)
         await callback.answer()
     elif action == "newform":
         await state.set_state(NewForm.city)
