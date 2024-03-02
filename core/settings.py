@@ -35,7 +35,7 @@ def get_settings(path: str):
             chat_id=evn.int("CHAT_ID")
         ),
         db_user=evn.str("DB_USER"),
-        db_password=evn.str("DB_PASSWORD")
+        db_password=evn.str("DB_PASSWORD"),
     )
 
 settings = get_settings('config')
@@ -46,9 +46,10 @@ client = gspread.authorize(credentials.with_scopes(scope))
 sheet = client.open_by_url('https://docs.google.com/spreadsheets/d/1ZdLjtdhlsD3B1wVDQFRfTo3NpvqGyudoitUJLcBuSNo/edit#gid=0')
 worksheet_city = sheet.worksheet('City')
 
-city_info = worksheet_city.get_all_records()
+class Cities():
+    def __init__(self):
+        self.city_info = worksheet_city.get_all_records()
+    def update(self):
+        self.city_info = worksheet_city.get_all_records()
 
-
-def check_city():
-    global city_info
-    city_info = worksheet_city.get_all_records()
+city_info = Cities()
