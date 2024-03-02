@@ -52,4 +52,5 @@ class Cities():
     def update(self):
         self.city_info = worksheet_city.get_all_records()
 
+
 city_info = Cities()

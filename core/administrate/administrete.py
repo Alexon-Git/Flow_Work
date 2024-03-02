@@ -6,7 +6,7 @@ from aiogram.types import CallbackQuery, Message
 from aiogram.filters.state import State, StatesGroup
 from aiogram.filters import StateFilter
 
-from core.settings import settings, home, check_city
+from core.settings import settings, home, city_info
 from core.keyboards import inline as kbi
 from core.database.database import get_data_admin, deleted_admin, get_user, get_all_price
 from core.message.text import get_text_start_mess, set_text_start_mess, get_amount, set_amount, get_bet, set_bet
@@ -201,6 +201,6 @@ async def set_new_start_mess(call: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "update_city")
 async def update_city(call: CallbackQuery):
-    check_city()
+    city_info.update()
     await call.answer("Список городов обновлен!")
 
