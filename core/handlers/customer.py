@@ -594,10 +594,9 @@ async def customer_forms_button_callback(callback: types.CallbackQuery,state: FS
 #===================================Обработка отправки геопозиции для трансляции===================================
 @router.message(Location.location, (F.location!=None and F.location.live_period!=None))
 async def courier_location(message: Message, state: FSMContext,bot:Bot) -> None:
-    await state.update_data(location=message.location)
     await state.update_data(translation=message)
     data = await state.get_data()
-    msg = await bot.send_location(chat_id=data["request_info"]["user_id_customer"], latitude=data["location"].latitude, longitude=data["location"].longitude, live_period=message.location.live_period)
+    msg = await bot.send_location(chat_id=data["request_info"]["user_id_customer"], latitude=message.location.latitude, longitude=message.location.longitude, live_period=message.location.live_period)
     await state.update_data({"message_id":msg.message_id,"chat_id":msg.chat.id})
     form = data["request_info"]
     msg = "<b>Текущая заявка</b>"
