@@ -10,13 +10,13 @@ from aiogram.fsm.context import StorageKey
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-
+from core.handlers.customer import geolocator
 from core.keyboards.reply import *
 from core.filters.Filters import *
 from core.database import database
 from core.keyboards.inline import *
 from core.message.text import get_amount
-from core.settings import check_city, city_info
+from core.settings import city_info
 
 router = Router()
 scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
@@ -42,13 +42,16 @@ async def courier_callback(callback: types.CallbackQuery,bot:Bot):
             return
         chat_id = 0
         link = ""
-        for i in city_info:
+        for i in city_info.city_info:
             if i["Город"]==courier["city"]:
                 link = i["ссылка"]
         builder = create_courier_buttons(True,link)
         
         days = datetime.datetime.strptime(courier["date_payment_expiration"], "%Y-%m-%d").date() - date.today()
-        message = f"Меню для курьеров.\nУ вас осталось {days.days}д. оплаченной подписки."
+        if days.days<0:
+            message = f"Меню для курьеров.\nУ вас закончилась подписка."
+        else:
+            message = f"Меню для курьеров.\nУ вас осталось {days.days}д. оплаченной подписки."
     else:
         message = "Меню для курьеров.\nПройдите регистрацию и вы получите 14д. пробного периода."
         builder = create_courier_buttons(False)
@@ -64,6 +67,19 @@ async def courier_button_callback(callback: types.CallbackQuery,state: FSMContex
         await state.set_state(CourierState.fio)
         await callback.message.answer("Введите ваше ФИО")
         await callback.answer()
+    elif action == "couriergetactiverequest":
+        form = await database.get_courier_active_request(callback.from_user.id)
+        msg = "<b>Активная заявка</b>"
+        msg += "\n➖➖➖➖➖➖➖➖➖➖➖➖➖\n"
+        msg += f"Магазин: {form['store_name']}\n"
+        adress_a = ", ".join(geolocator.reverse(form['adress_a']).address.split(", ")[:4])
+        adress_b = ", ".join(geolocator.reverse(form['adress_b']).address.split(", ")[:4])
+        msg += f"Адрес А:  <code>{adress_a}</code>\n"
+        msg += f"Адрес Б:  <code>{adress_b}</code>\n"
+        msg += f"Стоимость: {form['price']}\n"
+        msg += f"Код: {form['code']}\n"
+        msg = await bot.send_message(chat_id=callback.from_user.id, text=msg,
+                                     reply_markup=custom_btn("Закрыть","deletecallmes"))
     #===================================ОПЛАТА===================================
     elif action == "payment":
         await bot.send_invoice(
@@ -84,6 +100,7 @@ async def courier_button_callback(callback: types.CallbackQuery,state: FSMContex
         )
         await callback.answer()
 
+
 @router.pre_checkout_query()
 async def pre_checkout_query_handler(pre_checkout_query: types.PreCheckoutQuery,bot:Bot):
     await bot.answer_pre_checkout_query(pre_checkout_query.id,ok = True)
@@ -94,6 +111,11 @@ async def successful_payment(message:Message):
     date = datetime.datetime.strptime(courier["date_payment_expiration"], "%Y-%m-%d").date() + datetime.timedelta(days=30)
     await database.payment_courier(message.from_user.id, str(date))
     await message.answer("Вы успешно оплатили подписку на месяц")
+
+#===================================Удаление активной заявки===================================
+@router.callback_query(F.data == "deletecallmes")
+async def deletecallmes(callback: types.CallbackQuery):
+    await callback.message.delete()
 
 #===================================ФИО===================================
 @router.message(CourierState.fio,FioFilter())
@@ -116,7 +138,7 @@ async def courier_email(message: Message,state: FSMContext):
     await state.update_data(email = message.text)
     await state.set_state(CourierState.city)
     cities = []
-    for i in city_info:
+    for i in city_info.city_info:
         if i["Город"]!="":
             cities.append(i["Город"])
         else:
@@ -181,6 +203,11 @@ async def courier_contact(message:Message,state: FSMContext,bot:Bot):
     await state.update_data(phone=message.contact.phone_number)
     await message.answer("Последний этап: отправьте фотографию документа, подтверждающего личность. Документ должен быть читабельным для вашей успешной верификации",reply_markup=ReplyKeyboardRemove())
     await state.set_state(CourierState.photo)
+@router.message(CourierState.phone)
+async def courier_contact_message(message:Message,state: FSMContext):
+    await state.update_data(phone=message.text)
+    await message.answer("Последний этап: отправьте фотографию документа, подтверждающего личность. Документ должен быть читабельным для вашей успешной верификации",reply_markup=ReplyKeyboardRemove())
+    await state.set_state(CourierState.photo)
 
 #===================================Фотография документа и завершение регистрации===================================
 @router.message(CourierState.photo, F.photo !=None)
@@ -189,7 +216,7 @@ async def courier_photo(message: Message,state:FSMContext,bot:Bot):
 
     data = await state.get_data()
     await state.clear()
-    link = city_info[data["city"]]["ссылка"]
+    link = city_info.city_info[data["city"]]["ссылка"]
     await message.answer(f"Регистрация успешно завершена.\n➖➖➖➖➖➖➖➖➖➖➖➖➖\nПрежде чем вы получите 14д пробного использования и сможете отвечать на заявки, администраторы должны проверить ваш профиль.",reply_markup=link_city_buttons(link))
     new_courier = {
         "username": message.from_user.first_name,
@@ -198,7 +225,7 @@ async def courier_photo(message: Message,state:FSMContext,bot:Bot):
         "date_payment_expiration": "",
         "date_registration": str(date.today()),
         "fio": data["fio"],
-        "city": city_info[data["city"]]["Город"],
+        "city": city_info.city_info[data["city"]]["Город"],
         "phone": data["phone"],
         "email": data["email"],
         "notification_one": None,
@@ -281,7 +308,7 @@ async def request_chat(call: CallbackQuery, state: FSMContext, bot: Bot):
 #===================================Цикл уведомлений===================================
 async def check_date():
     bot = Bot(token=settings.bots.bot_token, parse_mode='HTML')
-    check_city()
+    city_info.update()
     users = await database.get_notification_one(str(date.today() + datetime.timedelta(days=1)))
     for user in users:
         try:

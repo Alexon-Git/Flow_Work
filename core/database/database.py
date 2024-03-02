@@ -234,6 +234,26 @@ async def get_customer_sent_request(user_id: int) -> dict:
         return {}
     return result
 
+async def get_courier_active_request(user_id: int) -> dict:
+    conn = await connect()
+    query = "SELECT * FROM public.request WHERE public.request.user_id_customer = $1, public.request.status_work <> 'finish'"
+    try:
+        rows = await conn.fetch(query, user_id)
+    finally:
+        await conn.close()
+    try:
+        result = {"user_id_customer": rows[0]["user_id_customer"], "username_customer": rows[0]["username_customer"],
+                  "date_registration": rows[0]["date_registration"],
+                  "status_work": rows[0]["status_work"],
+                  "adress_a": rows[0]["adress_a"],
+                  "adress_b": rows[0]["adress_b"],
+                  "code": rows[0]["code"], "price": rows[0]["price"],
+                  "store_name": rows[0]["store_name"], "message_id": rows[0]["message_id"],
+                  "chat_id": rows[0]["chat_id"], "courier_id": rows[0]["courier_id"],
+                  "message_courier_id": rows[0]["message_courier_id"]}
+    except IndexError:
+        return {}
+    return result
 
 async def get_request_id(message_id:int) -> int:
     conn = await connect()
@@ -343,6 +363,19 @@ async def check_courier(user_id: int) -> bool:
     finally:
         await conn.close()
     return result
+
+async def check_number_request_courier(user_id: int) -> bool:
+    conn = await connect()
+    try:
+        result = await conn.fetchval(
+            '''
+            
+                SELECT * FROM public.request    
+                WHERE user_id = $1, status_work <> 'finish'
+            ''', user_id)
+    finally:
+        await conn.close()
+    return len(result)>1
 
 async def check_customer(user_id: int) -> bool:
     """Функция проверки регистрации заказчика"""

@@ -96,7 +96,7 @@ async def customer_button_callback(callback: types.CallbackQuery, state: FSMCont
     elif action == "newform":
         await state.set_state(NewForm.city)
         cities = []
-        for i in city_info:
+        for i in city_info.city_info:
             if i["Город"] != "":
                 cities.append(i["Город"])
             else:
@@ -112,7 +112,8 @@ async def customer_button_callback(callback: types.CallbackQuery, state: FSMCont
         forms = await database.get_customer_sent_request(callback.from_user.id)
         for form in forms:
             if form["status_work"]=="work":
-                msg = "<b>Заявка в работе</b>\n"+"-"*30+"\n"
+                msg = "<b>Заявка в ожидании принятия товара</b>"
+                msg += "\n➖➖➖➖➖➖➖➖➖➖➖➖➖\n"
                 msg+=f"Магазин: {form['store_name']}\n"
                 adress_a = ", ".join(geolocator.reverse(form['adress_a']).address.split(", ")[:4])
                 adress_b = ", ".join(geolocator.reverse(form['adress_b']).address.split(", ")[:4])
@@ -122,8 +123,20 @@ async def customer_button_callback(callback: types.CallbackQuery, state: FSMCont
                 msg+=f"Код: {form['code']}\n"
                 builder = customer_finish(form["id"])
                 await callback.message.answer(text = msg,reply_markup=builder.as_markup())
+            elif form["status_work"]=="call":
+                msg = "<b>Заявка в  работе</b>"
+                msg += "\n➖➖➖➖➖➖➖➖➖➖➖➖➖\n"
+                msg += f"Магазин: {form['store_name']}\n"
+                adress_a = ", ".join(geolocator.reverse(form['adress_a']).address.split(", ")[:4])
+                adress_b = ", ".join(geolocator.reverse(form['adress_b']).address.split(", ")[:4])
+                msg += f"Адрес А: {adress_a}\n"
+                msg += f"Адрес Б: {adress_b}\n"
+                msg += f"Стоимость: {form['price']}\n"
+                msg += f"Код: {form['code']}\n"
+                await callback.message.answer(text=msg, reply_markup=start_chat_button(form["courier_id"],form["code"]))
             elif form["status_work"]=="sent":
-                msg = "<b>Заявка отправлена</b>\n"+"-"*30+"\n"
+                msg = "<b>Заявка отправлена</b>"
+                msg += "\n➖➖➖➖➖➖➖➖➖➖➖➖➖\n"
                 msg+=f"Магазин: {form['store_name']}\n"
                 adress_a = ", ".join(geolocator.reverse(form['adress_a']).address.split(", ")[:4])
                 adress_b = ", ".join(geolocator.reverse(form['adress_b']).address.split(", ")[:4])
@@ -168,7 +181,7 @@ async def customer_email(message: Message,state: FSMContext):
     await state.update_data(email = message.text)
     await state.set_state(CustomerRegistration.city)
     cities = []
-    for i in city_info:
+    for i in city_info.city_info:
         if i["Город"]!="":
             cities.append(i["Город"])
         else:
@@ -234,14 +247,17 @@ async def customer_button_callback(callback: types.CallbackQuery,state: FSMConte
 
 
 #===================================Номер и завершение регистрации===================================
-@router.message(CustomerRegistration.phone,(F.contact!=None and F.contact.user_id == F.from_user.id))
+@router.message(CustomerRegistration.phone)
 async def customer_contact(message:Message,state: FSMContext,bot:Bot):
-    await state.update_data(phone=message.contact.phone_number)
+    if message.contact:
+        await state.update_data(phone=message.contact.phone_number)
+    else:
+        await state.update_data(phone=message.text)
     data = await state.get_data()
     await state.clear()
     msg = await message.answer("ㅤ",reply_markup=ReplyKeyboardRemove())
     await msg.delete()
-    link = city_info[data["city"]]["ссылка"]
+    link = city_info.city_info[data["city"]]["ссылка"]
     builder = create_newform_button(link)
     await message.answer(text=f"Регистрация успешно завершена. Теперь вы можете создавать и просматривать свои заявки в стартовом меню или по кнопкам ниже.\n➖➖➖➖➖➖➖➖➖➖➖➖➖\nЧтобы вступить в группу города нажмите соответствующую кнопку.",reply_markup= builder.as_markup())
     new_customer = {
@@ -249,7 +265,7 @@ async def customer_contact(message:Message,state: FSMContext,bot:Bot):
         "user_id":message.from_user.id,
         "date_registration":str(date.today()),
         "fio":data["fio"],
-        "city":city_info[data["city"]]["Город"],
+        "city":city_info.city_info[data["city"]]["Город"],
         "phone":data["phone"],
         "email":data["email"],
         "organization":data["organization"]
@@ -386,7 +402,7 @@ async def form_store(message: Message,state: FSMContext,bot:Bot):
     data["cash"] = message.text
     msg = "Верны ли введенные данные?"
     msg += "\n➖➖➖➖➖➖➖➖➖➖➖➖➖\n"
-    city = city_info[data["city"]]["Город"]
+    city = city_info.city_info[data["city"]]["Город"]
     msg+=f"Город: {city}\n"
     msg+=f"Магазин: {data['store_name']}\n"
     adress_a = ", ".join(geolocator.reverse(data['adress_a']).address.split(", ")[:4])
@@ -412,14 +428,14 @@ async def customer_form_button_callback(callback: types.CallbackQuery,state: FSM
         for i in range(5):
             code+=random.choice(code_array)
         await callback.message.delete()
-        chat_id = city_info[data["city"]]["chat id"]
+        chat_id = city_info.city_info[data["city"]]["chat id"]
         await callback.message.answer("Заявка отправлена в группу города.")
         await callback.answer()
         msg = "<b>ЗАЯВКА</b>"
         msg += "\n➖➖➖➖➖➖➖➖➖➖➖➖➖\n"
         data = await state.get_data()
         msg+=f"Магазин: {data['store_name']}\n"
-        city = city_info[data["city"]]["Город"]
+        city = city_info.city_info[data["city"]]["Город"]
         msg+=f"Город: {city}\n"
         adress_a = ", ".join(geolocator.reverse(data['adress_a']).address.split(", ")[:4])
         adress_b = ", ".join(geolocator.reverse(data['adress_b']).address.split(", ")[:4])
@@ -450,7 +466,7 @@ async def customer_form_button_callback(callback: types.CallbackQuery,state: FSM
         await callback.message.delete()
         await state.set_state(NewForm.city)
         cities = []
-        for i in city_info:
+        for i in city_info.city_info:
             if i["Город"] != "":
                 cities.append(i["Город"])
             else:
@@ -480,6 +496,9 @@ async def customer_forms_button_callback(callback: types.CallbackQuery,state: FS
     courier = await database.get_courier(user_id = callback.from_user.id)
     if courier["status_payment"]==False or courier["verification"]==False:
         await callback.answer(f"Вы не верифицированы или у вас закончилась подписка курьера.")
+        return
+    if await database.check_number_request_courier(callback.from_user.id)==True:
+        await callback.answer(f"У вас уже есть активная заявка.")
         return
     action = callback.data.split("_")[1]
     if action == "chat":
@@ -734,7 +753,7 @@ async def send_message_chat(message: Message,state:FSMContext,bot:Bot):
     msg+=message.text
 
     await bot.send_message(chat_id=data["info"][0],text=msg,reply_markup=answer_chat_button(message.from_user.id,data["info"][1]))
-
+    await state.clear()
 @router.callback_query(AnswerChat.filter())
 async def answer_chat(callback: CallbackQuery,callback_data:Chat,bot:Bot):
     msg = f"Сообщение по заявке с кодом {callback_data.request_code}"

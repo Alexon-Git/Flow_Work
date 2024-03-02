@@ -57,11 +57,14 @@ def create_courier_buttons(registration: bool, link=None) -> InlineKeyboardBuild
             text="Оплата",
             callback_data=f"courier_payment")
         )
-        
         builder.row(InlineKeyboardButton(
             text="Группа города",
             url=link)
-        )        
+        )
+        builder.add(InlineKeyboardButton(
+            text="Активная заявка",
+            callback_data=f"couriergetactiverequest"
+        ))
     else:        
         builder.add(InlineKeyboardButton(
             text="Регистрация",
