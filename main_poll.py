@@ -7,8 +7,7 @@ from datetime import timedelta
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
 
-from core.handlers.courier import scheduler
-from core.settings import home
+from core.settings import home, scheduler
 from core.handlers.basic import *
 from core.administrate import router_admin
 from core.handlers import main_router, courier

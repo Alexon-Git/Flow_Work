@@ -7,6 +7,9 @@ from dataclasses import dataclass
 import gspread
 from google.oauth2.service_account import Credentials
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
+
 # Путь от корня системы до папки core например:
 # D:\Programing\Flow_Work\core
 home = os.path.dirname(__file__)

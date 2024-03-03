@@ -8,7 +8,6 @@ from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import LabeledPrice, ReplyKeyboardRemove, CallbackQuery
 from aiogram.fsm.context import StorageKey
 
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from core.handlers.customer import geolocator
 from core.keyboards.reply import *
@@ -19,7 +18,6 @@ from core.message.text import get_amount
 from core.settings import city_info
 
 router = Router()
-scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
 
 
 class CourierState(StatesGroup):

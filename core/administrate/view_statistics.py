@@ -7,9 +7,8 @@ from aiogram.types import CallbackQuery
 from aiogram.filters.state import State, StatesGroup
 
 from core.keyboards import inline as kbi
-from core.handlers.courier import scheduler
 from core.google_doc.googleSheets import upload_statistics
-from core.settings import city_info
+from core.settings import city_info, scheduler
 from core.statistics.basic import get_statistic, clean_statistic
 
 router = Router()

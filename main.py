@@ -7,8 +7,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
-from core.handlers.courier import scheduler
-from core.settings import settings
+from core.settings import settings, scheduler
 from core.handlers.basic import *
 from core.administrate import router_admin
 from core.handlers import main_router, courier
