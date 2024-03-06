@@ -371,7 +371,7 @@ async def check_number_request_courier(user_id: int) -> bool:
             '''
             
                 SELECT * FROM public.request    
-                WHERE user_id = $1, status_work <> 'finish'
+                WHERE user_id = $1 and status_work <> 'finish'
             ''', user_id)
     finally:
         await conn.close()

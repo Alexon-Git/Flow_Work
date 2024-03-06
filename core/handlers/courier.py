@@ -239,7 +239,6 @@ async def courier_photo(message: Message,state:FSMContext,bot:Bot):
     msg += "\n➖➖➖➖➖➖➖➖➖➖➖➖➖\n"
     msg += f"Пользователь: @{message.from_user.username}\n"
     msg += f"Ссылка: [{message.from_user.first_name}](tg://user?id={message.from_user.id})\n"
-
     await bot.send_photo(chat_id=settings.bots.chat_id, photo=data["photo"], caption=msg,parse_mode="Markdown",reply_markup=verification_courier_button(message.from_user.id))
 
 

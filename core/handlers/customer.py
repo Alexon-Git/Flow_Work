@@ -144,8 +144,8 @@ async def customer_button_callback(callback: types.CallbackQuery, state: FSMCont
                 msg+=f"Адрес Б: {adress_b}\n"
                 msg+=f"Стоимость: {form['price']}\n"
                 msg+=f"Код: {form['code']}\n"
-                builder = form_cancel_chat(form["id"], callback.from_user.id, form["code"])
-                await callback.message.answer(text=msg,reply_markup=builder.as_markup())
+                await callback.message.answer(text=msg,
+                                              reply_markup=form_cancel_chat(form["id"], callback.from_user.id, form["code"]))
         await callback.answer()
 
 

@@ -76,6 +76,6 @@ async def menu_admins(call: CallbackQuery):
 
 @scheduler.scheduled_job("cron", hour=23, minute=58)
 async def upload_stat():
-    for i in city_info:
+    for i in city_info.city_info:
         upload_statistics(i["Город"], i["chat id"])
         clean_statistic(i["chat id"])
