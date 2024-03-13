@@ -22,7 +22,7 @@ class ViewStat(StatesGroup):
 @router.callback_query(F.data == "view_statistics")
 async def menu_admins(call: CallbackQuery, state: FSMContext):
     cities = []
-    for i in city_info:
+    for i in city_info.city_info:
         if i["Город"] != "":
             cities.append(i["Город"])
         else:
@@ -61,10 +61,10 @@ async def menu_admins(call: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data.split("_")[0] == "city")
 async def menu_admins(call: CallbackQuery):
     action = call.data.split("_")[1]
-    city_id = city_info[int(action)]["chat id"]
+    city_id = city_info.city_info[int(action)]["chat id"]
     try:
         data = get_statistic(city_id)
-        await call.message.edit_text(f"Статистика по городу {city_info[int(action)]['Город']}\n"
+        await call.message.edit_text(f"Статистика по городу {city_info.city_info[int(action)]['Город']}\n"
                                      f"за {dt.date.strftime(dt.date.today(), '%d.%m.%Y')}\n"
                                      f"Новые заявки: {data['record_new']}\n"
                                      f"Отмененные заявки: {data['record_cancel']}\n"
