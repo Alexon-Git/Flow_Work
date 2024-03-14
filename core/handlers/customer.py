@@ -51,6 +51,8 @@ class Location(StatesGroup):
     request_info = State()
     location = State()
     translation = State()
+    translation_chat_id = ()
+    translation_message_id = ()
     message = State()
     chat_id = State()
     message_to_chat =()
@@ -595,7 +597,8 @@ async def customer_forms_button_callback(callback: types.CallbackQuery,state: FS
 #===================================Обработка отправки геопозиции для трансляции===================================
 @router.message(Location.location, (F.location!=None and F.location.live_period!=None))
 async def courier_location(message: Message, state: FSMContext,bot:Bot) -> None:
-    await state.update_data(translation=message)
+    await state.update_data(translation_chat_id=message.chat.id)
+    await state.update_data(translation_message_id=message.message_id)
     data = await state.get_data()
     msg = await bot.send_location(chat_id=data["request_info"]["user_id_customer"], latitude=message.location.latitude, longitude=message.location.longitude, live_period=message.location.live_period)
     await state.update_data({"message_id":msg.message_id,"chat_id":msg.chat.id})
@@ -635,7 +638,7 @@ async def finishrequest(callback:CallbackQuery,state:FSMContext,bot:Bot):
     data = await state.get_data()
     await state.clear()
     await bot.delete_message(chat_id=data["chat_id"],message_id=data["message_id"])
-    await bot.delete_message(chat_id=data["translation"].chat.id,message_id=data["translation"].message_id)
+    await bot.delete_message(chat_id=data["translation_chat_id"],message_id=data["translation_message_id"].message_id)
     await bot.delete_message(chat_id=data["request_info"]["chat_id"],message_id=data["request_info"]["message_id"])
     await bot.delete_message(chat_id=data["request_info"]["user_id_customer"],message_id=data["customer_message_id"])
     await bot.send_message(chat_id=data["request_info"]["user_id_customer"],text=f"Курьер завершил доставку по заявке с кодом {data['request_info']['code']}.\nНе забудьте об оплате, а также по желанию оцените курьера с помощью кнопок ниже.",reply_markup=add_score_button(data['request_info']['courier_id'],data['request_info']['id']))
