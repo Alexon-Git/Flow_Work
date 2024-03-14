@@ -252,7 +252,7 @@ async def get_courier_active_request(user_id: int) -> dict:
                   "chat_id": rows[0]["chat_id"], "courier_id": rows[0]["courier_id"],
                   "message_courier_id": rows[0]["message_courier_id"]}
     except IndexError:
-        return {}
+        return None
     return result
 
 async def get_request_id(message_id:int) -> int:
