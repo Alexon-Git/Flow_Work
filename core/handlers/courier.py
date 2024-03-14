@@ -9,7 +9,6 @@ from aiogram.types import LabeledPrice, ReplyKeyboardRemove, CallbackQuery
 from aiogram.fsm.context import StorageKey
 
 
-from core.handlers.customer import geolocator
 from core.keyboards.reply import *
 from core.filters.Filters import *
 from core.database import database
