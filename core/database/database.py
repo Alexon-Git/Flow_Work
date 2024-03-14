@@ -236,7 +236,7 @@ async def get_customer_sent_request(user_id: int) -> dict:
 
 async def get_courier_active_request(user_id: int) -> dict:
     conn = await connect()
-    query = "SELECT * FROM public.request WHERE public.request.user_id_customer = $1, public.request.status_work <> 'finish'"
+    query = "SELECT * FROM public.request WHERE public.request.user_id_customer = $1 AND public.request.status_work <> 'finish'"
     try:
         rows = await conn.fetch(query, user_id)
     finally:
