@@ -82,6 +82,7 @@ async def courier_button_callback(callback: types.CallbackQuery,state: FSMContex
         msg += f"Код: {form['code']}\n"
         msg = await bot.send_message(chat_id=callback.from_user.id, text=msg,
                                      reply_markup=custom_btn("Закрыть","deletecallmes"))
+        await callback.answer()
     #===================================ОПЛАТА===================================
     elif action == "payment":
         await bot.send_invoice(
