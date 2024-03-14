@@ -623,7 +623,7 @@ async def courier_location_uncorrectly_callback(message: Message):
     await message.answer("Некорректная геопозиция. Отправьте повторно с трансляцией вашего местоположения.")
 
 
-@router.edited_message(Location)
+@router.edited_message(Location.translation)
 async def edited_message_handler(edited_message: types.Message,state: FSMContext,bot:Bot) -> None:
     data = await state.get_data()
     if edited_message.location!=None:
