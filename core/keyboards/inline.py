@@ -63,7 +63,7 @@ def create_courier_buttons(registration: bool, link=None) -> InlineKeyboardBuild
         )
         builder.add(InlineKeyboardButton(
             text="Активная заявка",
-            callback_data=f"couriergetactiverequest"
+            callback_data=f"courier_getactiverequest"
         ))
     else:        
         builder.add(InlineKeyboardButton(
