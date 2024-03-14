@@ -74,8 +74,8 @@ async def courier_button_callback(callback: types.CallbackQuery,state: FSMContex
         msg = "<b>Активная заявка</b>"
         msg += "\n➖➖➖➖➖➖➖➖➖➖➖➖➖\n"
         msg += f"Магазин: {form['store_name']}\n"
-        adress_a = ", ".join(geolocator.reverse(form['adress_a']).address.split(", ")[:4])
-        adress_b = ", ".join(geolocator.reverse(form['adress_b']).address.split(", ")[:4])
+        adress_a =form['adress_a']
+        adress_b = form['adress_b']
         msg += f"Адрес А:  <code>{adress_a}</code>\n"
         msg += f"Адрес Б:  <code>{adress_b}</code>\n"
         msg += f"Стоимость: {form['price']}\n"

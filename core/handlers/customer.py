@@ -19,10 +19,16 @@ from core.statistics.basic import set_city_stat
 from core.handlers.basic import start_call_handler
 from core.message.text import get_text_start_mess, get_bet
 
+from decimal import Decimal
+from yandex_geocoder import Client
+
+client = Client(settings.yandex_api)
+
+
+
 router = Router()
 #group_id = -1002057238567
 group_id = -4168135619
-geolocator = Nominatim(user_agent="Flow_Work.bot")
 
 
 class CustomerRegistration(StatesGroup):
@@ -74,6 +80,7 @@ class ChatState(StatesGroup):
 #===================================Меню Заказчика===================================
 @router.callback_query(F.data=="customer")
 async def customer_callback(callback: types.CallbackQuery,bot:Bot):
+
     if await database.check_customer(user_id = callback.from_user.id):
         builder = create_customer_buttons(True)
         message = f"Меню заказчиков.\nЗдесь вы можете просмотреть свои заявки или создать новую."
@@ -115,8 +122,8 @@ async def customer_button_callback(callback: types.CallbackQuery, state: FSMCont
                 msg = "<b>Заявка в ожидании принятия товара</b>"
                 msg += "\n➖➖➖➖➖➖➖➖➖➖➖➖➖\n"
                 msg+=f"Магазин: {form['store_name']}\n"
-                adress_a = ", ".join(geolocator.reverse(form['adress_a']).address.split(", ")[:4])
-                adress_b = ", ".join(geolocator.reverse(form['adress_b']).address.split(", ")[:4])
+                adress_a = form['adress_a']
+                adress_b = form['adress_b']
                 msg+=f"Адрес А: {adress_a}\n"
                 msg+=f"Адрес Б: {adress_b}\n"
                 msg+=f"Стоимость: {form['price']}\n"
@@ -127,8 +134,8 @@ async def customer_button_callback(callback: types.CallbackQuery, state: FSMCont
                 msg = "<b>Заявка в  работе</b>"
                 msg += "\n➖➖➖➖➖➖➖➖➖➖➖➖➖\n"
                 msg += f"Магазин: {form['store_name']}\n"
-                adress_a = ", ".join(geolocator.reverse(form['adress_a']).address.split(", ")[:4])
-                adress_b = ", ".join(geolocator.reverse(form['adress_b']).address.split(", ")[:4])
+                adress_a = form['adress_a']
+                adress_b = form['adress_b']
                 msg += f"Адрес А: {adress_a}\n"
                 msg += f"Адрес Б: {adress_b}\n"
                 msg += f"Стоимость: {form['price']}\n"
@@ -138,8 +145,8 @@ async def customer_button_callback(callback: types.CallbackQuery, state: FSMCont
                 msg = "<b>Заявка отправлена</b>"
                 msg += "\n➖➖➖➖➖➖➖➖➖➖➖➖➖\n"
                 msg+=f"Магазин: {form['store_name']}\n"
-                adress_a = ", ".join(geolocator.reverse(form['adress_a']).address.split(", ")[:4])
-                adress_b = ", ".join(geolocator.reverse(form['adress_b']).address.split(", ")[:4])
+                adress_a = form['adress_a']
+                adress_b = form['adress_b']
                 msg+=f"Адрес А: {adress_a}\n"
                 msg+=f"Адрес Б: {adress_b}\n"
                 msg+=f"Стоимость: {form['price']}\n"
@@ -328,38 +335,25 @@ async def form_store(message: Message,state: FSMContext):
 async def form_none_store(callback: CallbackQuery,state: FSMContext):
     await state.update_data(store_name="Не из магазина.")
     builder = cancel_form_button()
-    msg = await callback.message.edit_text("Укажите адрес точки (через отправку геолокации) из которой будет произведена доставка (Пункт А)",reply_markup=builder.as_markup())
+    msg = await callback.message.edit_text("Укажите адрес точки из которой будет произведена доставка (Пункт А)",reply_markup=builder.as_markup())
     await state.update_data(last_msg=msg.message_id)
     await state.set_state(NewForm.adress_a)
 
 
 #===================================Адрес-А===================================
-@router.message(NewForm.adress_a, F.location!=None)
+@router.message(NewForm.adress_a)
 async def form_adress_a(message: Message,state: FSMContext,bot:Bot):
-    coordinate = f"{message.location.latitude},{message.location.longitude}"
-    await state.update_data(adress_a =  coordinate)
+    await state.update_data(adress_a =  message.text)
     data = await state.get_data()
     await bot.edit_message_reply_markup(chat_id=message.chat.id,message_id=data["last_msg"],reply_markup=None)
     builder = cancel_form_button()
     msg = await message.answer("Укажите адрес точки в которую будет произведена доставка (Пункт Б)",reply_markup=builder.as_markup())
     await state.update_data(last_msg=msg.message_id)
     await state.set_state(NewForm.adress_b)
-
-@router.message(NewForm.adress_a, F.location==None)
-async def form_adress_a_incorrectly(message: Message,state: FSMContext,bot:Bot):
-    data = await state.get_data()
-    await bot.edit_message_reply_markup(chat_id=message.chat.id, message_id=data["last_msg"], reply_markup=None)
-    builder = cancel_form_button()
-    msg = await message.answer("Ошибка! Вы отправили сообщение без геолокации. "
-                               "в\nПовторите попытку.",
-                               reply_markup=builder.as_markup())
-    await state.update_data(last_msg=msg.message_id)
-
 #===================================Адрес-Б===================================
-@router.message(NewForm.adress_b, F.location!=None)
+@router.message(NewForm.adress_b)
 async def form_adress_b(message: Message,state: FSMContext,bot:Bot):
-    coordinate = f"{message.location.latitude},{message.location.longitude}"
-    await state.update_data(adress_b=coordinate)
+    await state.update_data(adress_b=message.text)
     data = await state.get_data()
     await bot.edit_message_reply_markup(chat_id=message.chat.id, message_id=data["last_msg"], reply_markup=None)
     builder = cancel_form_button()
@@ -374,14 +368,6 @@ async def form_adress_b(message: Message,state: FSMContext,bot:Bot):
     await state.update_data(last_msg=msg.message_id)
     await state.set_state(NewForm.cash)
 
-@router.message(NewForm.adress_b, F.location==None)
-async def form_adress_a_incorrectly(message: Message,state: FSMContext,bot:Bot):
-    data = await state.get_data()
-    await bot.edit_message_reply_markup(chat_id=message.chat.id, message_id=data["last_msg"], reply_markup=None)
-    builder = cancel_form_button()
-    msg = await message.answer("Ошибка! Вы отправили сообщение без геолокации.\nПовторите попытку.",
-                               reply_markup=builder.as_markup())
-    await state.update_data(last_msg=msg.message_id)
 
 #===================================Стоимость===================================
 @router.message(NewForm.cash)
@@ -405,8 +391,8 @@ async def form_store(message: Message,state: FSMContext,bot:Bot):
     city = city_info.city_info[data["city"]]["Город"]
     msg+=f"Город: {city}\n"
     msg+=f"Магазин: {data['store_name']}\n"
-    adress_a = ", ".join(geolocator.reverse(data['adress_a']).address.split(", ")[:4])
-    adress_b = ", ".join(geolocator.reverse(data['adress_b']).address.split(", ")[:4])
+    adress_a = data["adress_a"]
+    adress_b = data["adress_b"]
     msg+=f"Адрес А:  <code>{adress_a}</code>\n"
     msg+=f"Адрес Б:  <code>{adress_b}</code>\n"
     msg+=f"Стоимость доставки: {data['cash']}\n"
@@ -437,10 +423,8 @@ async def customer_form_button_callback(callback: types.CallbackQuery,state: FSM
         msg+=f"Магазин: {data['store_name']}\n"
         city = city_info.city_info[data["city"]]["Город"]
         msg+=f"Город: {city}\n"
-        adress_a = ", ".join(geolocator.reverse(data['adress_a']).address.split(", ")[:4])
-        adress_b = ", ".join(geolocator.reverse(data['adress_b']).address.split(", ")[:4])
-        msg += f"Адрес А:  <code>{adress_a}</code>\n"
-        msg += f"Адрес Б:  <code>{adress_b}</code>\n"
+        msg += f"Адрес А:  <code>{data['adress_a']}</code>\n"
+        msg += f"Адрес Б:  <code>{data['adress_b']}</code>\n"
         msg+=f"Стоимость: {data['cash']}\n"
         msg = await bot.send_message(chat_id = chat_id, text = msg)
         newreq = {
@@ -519,10 +503,8 @@ async def customer_forms_button_callback(callback: types.CallbackQuery,state: FS
             msg += f"Средний рейтинг: 0\n"
         msg+="➖➖➖➖➖➖➖➖➖➖➖➖➖\n"
         msg+=f"Магазин: {form['store_name']}\n"
-        adress_a = ", ".join(geolocator.reverse(form['adress_a']).address.split(", ")[:4])
-        adress_b = ", ".join(geolocator.reverse(form['adress_b']).address.split(", ")[:4])
-        msg += f"Адрес А:  <code>{adress_a}</code>\n"
-        msg += f"Адрес Б:  <code>{adress_b}</code>\n"
+        msg += f"Адрес А:  <code>{form['adress_a']}</code>\n"
+        msg += f"Адрес Б:  <code>{form['adress_b']}</code>\n"
         msg+=f"Стоимость: {form['price']}\n"
         msg+=f"Код: {form['code']}\n"
         builder = status_work()
@@ -531,8 +513,8 @@ async def customer_forms_button_callback(callback: types.CallbackQuery,state: FS
         msg = "<b>Вы ответили на заявку</b>"
         msg += "\n➖➖➖➖➖➖➖➖➖➖➖➖➖\n"
         msg+=f"Магазин: {form['store_name']}\n"
-        msg += f"Адрес А:  <code>{adress_a}</code>\n"
-        msg += f"Адрес Б:  <code>{adress_b}</code>\n"
+        msg += f"Адрес А:  <code>{form['adress_a']}</code>\n"
+        msg += f"Адрес Б:  <code>{form['adress_b']}</code>\n"
         msg+=f"Стоимость: {form['price']}\n"
         msg+=f"Код: {form['code']}\n"
         msg = await bot.send_message(chat_id = callback.from_user.id, text = msg,reply_markup=courier_start_finish(int(action),customer_message.message_id,form["user_id_customer"],form["code"]))
@@ -621,13 +603,15 @@ async def courier_location(message: Message, state: FSMContext,bot:Bot) -> None:
     msg = "<b>Текущая заявка</b>"
     msg+="\n➖➖➖➖➖➖➖➖➖➖➖➖➖\n"
     msg += f"Магазин: {form['store_name']}\n"
-    adress_a = ", ".join(geolocator.reverse(form['adress_a']).address.split(", ")[:4])
-    adress_b = ", ".join(geolocator.reverse(form['adress_b']).address.split(", ")[:4])
-    msg += f"Адрес А:  <code>{adress_a}</code>\n"
-    msg += f"Адрес Б:  <code>{adress_b}</code>\n"
+    msg += f"Адрес А:  <code>{form['adress_a']}</code>\n"
+    msg += f"Адрес Б:  <code>{form['adress_b']}</code>\n"
     msg += f"Стоимость: {form['price']}\n"
     msg += f"Код: {form['code']}\n"
-    href = f"maps.yandex.ru/?rtext={form['adress_a']}~{form['adress_b']}&rtt=mt"
+    coord = list(client.coordinates(form['adress_a']))
+    coordsA = ", ".join([str(i) for i in coord])
+    coord = list(client.coordinates(form['adress_a']))
+    coordsB = ", ".join([str(i) for i in coord])
+    href = f"maps.yandex.ru/?rtext={coordsA}~{coordsB}&rtt=mt"
     msg += f'Ссылка на маршрут: <a href = "{href}">Маршрут</a>\n'
     await message.answer(text = msg,reply_markup=translatelocation_buttons(form['user_id_customer'],form["code"]),parse_mode="HTML")
     await state.set_state(Location.translation)

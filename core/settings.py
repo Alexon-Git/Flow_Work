@@ -26,6 +26,7 @@ class Settings:
     bots: Bots
     db_user: str
     db_password: str
+    yandex_api:str
 
 def get_settings(path: str):
     evn = Env()
@@ -39,6 +40,7 @@ def get_settings(path: str):
         ),
         db_user=evn.str("DB_USER"),
         db_password=evn.str("DB_PASSWORD"),
+        yandex_api=evn.str("YANDEX_API")
     )
 
 settings = get_settings('config')

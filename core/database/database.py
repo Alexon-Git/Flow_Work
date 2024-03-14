@@ -367,11 +367,11 @@ async def check_courier(user_id: int) -> bool:
 async def check_number_request_courier(user_id: int) -> bool:
     conn = await connect()
     try:
-        result = await conn.fetchval(
+        result = await conn.fetch(
             '''
             
-                SELECT * FROM public.request    
-                WHERE courier_id = $1 and status_work <> 'finish' and status_work <> None
+                SELECT * FROM request  
+                WHERE courier_id = $1 and status_work <> 'finish'
             ''', user_id)
     finally:
         await conn.close()
