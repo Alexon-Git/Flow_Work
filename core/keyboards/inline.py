@@ -193,6 +193,7 @@ def admin_menu(user_id: int) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text="Просмотр Заказчиков/Курьеров", callback_data="view_record")],
         [InlineKeyboardButton(text="Просмотр статистики", callback_data="view_statistics")],
         [InlineKeyboardButton(text="Мин. и сред. ставка", callback_data="bet")],
+        [InlineKeyboardButton(text="Закрепленные заявки", callback_data="pinned_orders")],
         [InlineKeyboardButton(text="Обновить список городов", callback_data="update_city")]
     ]
     if user_id == settings.bots.admin_id:
@@ -422,5 +423,12 @@ def information():
     buttons = [[InlineKeyboardButton(text="Посмотреть инструкцию", web_app=WebAppInfo(
         url="https://nil-it.notion.site/Flowwork-e71f09ba455f4fa8a5df000e92265374?pvs=4"))]]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return keyboard
+
+def close_state_fun():
+    kb = [
+        [InlineKeyboardButton(text='Отменить действие', callback_data='close_state')]
+    ]
+    keyboard = InlineKeyboardMarkup(inline_keyboard=kb)
     return keyboard
 

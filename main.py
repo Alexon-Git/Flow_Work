@@ -1,3 +1,4 @@
+import asyncio
 import os
 import logging
 import datetime as dt
@@ -11,12 +12,13 @@ from core.settings import settings, scheduler
 from core.handlers.basic import *
 from core.administrate import router_admin
 from core.handlers import main_router, courier
+from store import check_order_store
 
 REDIS_DSN = "redis://127.0.0.1:6379"
 
 bot = Bot(token=settings.bots.bot_token, parse_mode='HTML')
 storage = RedisStorage.from_url(REDIS_DSN, key_builder=DefaultKeyBuilder(with_bot_id=True),
-                                    data_ttl=dt.timedelta(days=1.0), state_ttl=dt.timedelta(days=1.0))
+                                data_ttl=dt.timedelta(days=1.0), state_ttl=dt.timedelta(days=1.0))
 dp = Dispatcher(storage=storage)
 
 MAIN_BOT_PATH = f"/MAIN"
@@ -33,7 +35,6 @@ if not os.path.exists(f"{home}/logging"):
     os.makedirs(f"{home}/logging")
 if not os.path.exists(f"{home}/core/statistics/data"):
     os.makedirs(f"{home}/core/statistics/data")
-
 
 # Для отладки локально разкоментить
 # logging.basicConfig(level=logging.INFO)
@@ -56,11 +57,12 @@ async def on_startup():
     logger.error("Снятие и установка webhook")
     scheduler.start()
     scheduler.add_job(courier.check_date, "interval", seconds=21600)
+    asyncio.create_task(check_order_store())  # задача на запрос к магазину
     await bot.delete_webhook()
     await bot.set_webhook(
-            url=BASE_URL,
-            certificate=types.FSInputFile("/etc/ssl/certs/Bot.crt"),  # Путь до сертификата
-            drop_pending_updates=True)
+        url=BASE_URL,
+        certificate=types.FSInputFile("/etc/ssl/certs/Bot.crt"),  # Путь до сертификата
+        drop_pending_updates=True)
 
     await bot.send_message(settings.bots.chat_id, "Бот запущен")
     return
