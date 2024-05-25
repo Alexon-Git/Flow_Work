@@ -330,14 +330,14 @@ async def customer_button_callback(callback: types.CallbackQuery,state: FSMConte
 async def form_store(message: Message,state: FSMContext):
     await state.update_data(store_name = message.text)
     builder = cancel_form_button()
-    msg = await message.answer("Укажите адрес точки (через отправку геолокации), из которой будет произведена доставка (Пункт А).",reply_markup=builder.as_markup())
+    msg = await message.answer("Укажите адрес точки (через отправку геолокации), из которой будет произведена доставка. Необходимо указать адресс с Городом (Пункт А).",reply_markup=builder.as_markup())
     await state.update_data(last_msg=msg.message_id)
     await state.set_state(NewForm.adress_a)
 @router.callback_query(F.data == "none_store",NewForm.store_name)
 async def form_none_store(callback: CallbackQuery,state: FSMContext):
     await state.update_data(store_name="Не из магазина.")
     builder = cancel_form_button()
-    msg = await callback.message.edit_text("Укажите адрес точки из которой будет произведена доставка (Пункт А)",reply_markup=builder.as_markup())
+    msg = await callback.message.edit_text("Укажите адрес точки из которой будет произведена доставка. Необходимо указать адресс с Городом (Пункт А)",reply_markup=builder.as_markup())
     await state.update_data(last_msg=msg.message_id)
     await state.set_state(NewForm.adress_a)
 
@@ -349,7 +349,7 @@ async def form_adress_a(message: Message,state: FSMContext,bot:Bot):
     data = await state.get_data()
     await bot.edit_message_reply_markup(chat_id=message.chat.id,message_id=data["last_msg"],reply_markup=None)
     builder = cancel_form_button()
-    msg = await message.answer("Укажите адрес точки в которую будет произведена доставка (Пункт Б)",reply_markup=builder.as_markup())
+    msg = await message.answer("Укажите адрес точки в которую будет произведена доставка. Необходимо указать адресс с Городом (Пункт Б)",reply_markup=builder.as_markup())
     await state.update_data(last_msg=msg.message_id)
     await state.set_state(NewForm.adress_b)
 #===================================Адрес-Б===================================
@@ -398,6 +398,12 @@ async def form_store(message: Message,state: FSMContext,bot:Bot):
     msg+=f"Адрес А:  <code>{adress_a}</code>\n"
     msg+=f"Адрес Б:  <code>{adress_b}</code>\n"
     msg+=f"Стоимость доставки: {data['cash']}\n"
+    coord = list(client.coordinates(data['adress_a']))
+    coordsA = f"{coord[1]}, {coord[0]}"
+    coord = list(client.coordinates(data['adress_b']))
+    coordsB = f"{coord[1]}, {coord[0]}"
+    href = f"maps.yandex.ru/?rtext={coordsA}~{coordsB}&rtt=mt"
+    msg += f'Ссылка на маршрут: <a href = "{href}">Маршрут</a>\n'
     builder = create_customer_send_form_buttons()
     await message.answer(msg,reply_markup=builder.as_markup())
 
@@ -428,6 +434,12 @@ async def customer_form_button_callback(callback: types.CallbackQuery,state: FSM
         msg += f"Адрес А:  <code>{data['adress_a']}</code>\n"
         msg += f"Адрес Б:  <code>{data['adress_b']}</code>\n"
         msg+=f"Стоимость: {data['cash']}\n"
+        coord = list(client.coordinates(data['adress_a']))
+        coordsA = f"{coord[1]}, {coord[0]}"
+        coord = list(client.coordinates(data['adress_b']))
+        coordsB = f"{coord[1]}, {coord[0]}"
+        href = f"maps.yandex.ru/?rtext={coordsA}~{coordsB}&rtt=mt"
+        msg += f'Ссылка на маршрут: <a href = "{href}">Маршрут</a>\n'
         msg = await bot.send_message(chat_id = chat_id, text = msg)
         newreq = {
             "username_customer":callback.from_user.username,
@@ -610,10 +622,10 @@ async def courier_location(message: Message, state: FSMContext,bot:Bot) -> None:
     msg += f"Адрес Б:  <code>{form['adress_b']}</code>\n"
     msg += f"Стоимость: {form['price']}\n"
     msg += f"Код: {form['code']}\n"
-    coord = list(client.coordinates(form['adress_a']))
-    coordsA = ", ".join([str(i) for i in coord])
-    coord = list(client.coordinates(form['adress_b']))
-    coordsB = ", ".join([str(i) for i in coord])
+    coord = list(client.coordinates(data['adress_a']))
+    coordsA = f"{coord[1]}, {coord[0]}"
+    coord = list(client.coordinates(data['adress_b']))
+    coordsB = f"{coord[1]}, {coord[0]}"
     href = f"maps.yandex.ru/?rtext={coordsA}~{coordsB}&rtt=mt"
     msg += f'Ссылка на маршрут: <a href = "{href}">Маршрут</a>\n'
     await message.answer(text = msg,reply_markup=translatelocation_buttons(form['user_id_customer'],form["code"]),parse_mode="HTML")
