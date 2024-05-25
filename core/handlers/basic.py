@@ -20,8 +20,11 @@ async def start_handler(message: Message, state: FSMContext):
     await state.clear()
     try:
         if check_code_admin(int(message.text.split(" ")[-1])):
-            await message.answer("Поздравляю, вы стали администратором!")
+            data_user = await database.get_users_user(message.from_user.id)
+            if data_user["username"] is None:
+                await database.update_user({"username": message.from_user.first_name, "user_id": message.from_user.id})
             await database.save_new_admin(message.from_user.id)
+            await message.answer("Поздравляю, вы стали администратором!")
             return
     except:
         pass

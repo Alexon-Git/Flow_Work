@@ -176,14 +176,14 @@ async def check_bet(call: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data == "bet_edit")
-@router.callback_query(F.data == "no", EditAmount.SetAmount)
+@router.callback_query(F.data == "no", EditBet.SetAmount)
 async def set_new_bet(call: CallbackQuery, state: FSMContext):
     msg = await call.message.edit_text(f"Отправьте новую стоимость числом:", reply_markup=kbi.cancel_admin())
     await state.update_data({"del": msg.message_id})
-    await state.set_state(EditAmount.SetAmount)
+    await state.set_state(EditBet.SetAmount)
 
 
-@router.message(EditAmount.SetAmount)
+@router.message(EditBet.SetAmount)
 async def check_new_mess(mess: Message, state: FSMContext, bot: Bot):
     try:
         new_amount = int(mess.text)
@@ -192,14 +192,14 @@ async def check_new_mess(mess: Message, state: FSMContext, bot: Bot):
             await bot.edit_message_reply_markup(mess.chat.id, del_kb, reply_markup=None)
         except:
             pass
-        await state.update_data({"amount": new_amount*100})
+        await state.update_data({"amount": new_amount})
         await mess.answer(f"Новая стоимость: {new_amount}\n\nСохраняем?",
                           reply_markup=kbi.confirmation())
     except ValueError:
         await mess.answer("Данные не являются числом или содержат лишние символы!", reply_markup=kbi.cancel_admin())
 
 
-@router.callback_query(F.data == "yes", EditAmount.SetAmount)
+@router.callback_query(F.data == "yes", EditBet.SetAmount)
 async def set_new_start_mess(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     set_bet(data["amount"])

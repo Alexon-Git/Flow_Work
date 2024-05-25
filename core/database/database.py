@@ -173,6 +173,19 @@ async def get_courier(user_id: int) -> dict:
         return {}
 
 
+async def get_users_user(user_id: int) -> dict:
+    conn = await connect()
+    query = 'SELECT * FROM public.users WHERE public.users.user_id = $1'
+    try:
+        rows = await conn.fetch(query, user_id)
+    finally:
+        await conn.close()
+    try:
+        return rows[0]
+    except IndexError:
+        return {}
+
+
 async def get_user(user_id: int) -> dict:
     conn = await connect()
     query = 'SELECT * FROM public.courier WHERE public.courier.user_id = $1'
@@ -701,6 +714,17 @@ async def update_courier(data: dict):
              'WHERE public.courier.user_id=$5')
     try:
         await conn.execute(query, data["fio"], data["phone"], data["email"], data["city"], data["user_id"])
+    finally:
+        await conn.close()
+    return
+
+
+async def update_user(data: dict):
+    conn = await connect()
+    query = ('UPDATE public.users SET username=$1 '
+             'WHERE public.users.user_id=$2')
+    try:
+        await conn.execute(query, data["username"], data["user_id"])
     finally:
         await conn.close()
     return
